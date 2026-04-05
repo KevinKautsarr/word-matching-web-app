@@ -3,85 +3,80 @@
 @section('title', 'Dashboard — LEXORA')
 
 @section('content')
-<div class="min-h-screen" style="background: #0d0f1a; font-family: 'DM Sans', sans-serif;">
+<div class="min-h-screen font-dm">
 
     {{-- Google Fonts --}}
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
-        :root {
-            --bg:       #0d0f1a;
-            --purple:   #6c63ff;
-            --green:    #06d6a0;
-            --gold:     #ffd166;
-            --card:     #13162a;
-            --border:   rgba(108,99,255,0.18);
-            --text-muted: #8892b0;
-        }
 
         .font-syne  { font-family: 'Syne', sans-serif; }
         .font-dm    { font-family: 'DM Sans', sans-serif; }
 
         /* --- XP progress bar shimmer --- */
-        @keyframes shimmer {
-            0%   { background-position: -400px 0; }
-            100% { background-position:  400px 0; }
-        }
-        .xp-bar-fill {
-            background: linear-gradient(90deg, var(--purple) 0%, var(--green) 50%, var(--purple) 100%);
-            background-size: 400px 100%;
-            animation: shimmer 2.5s linear infinite;
-            transition: width 1s cubic-bezier(.4,0,.2,1);
-        }
 
-        /* --- Stat card glow on hover --- */
-        .stat-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 1rem;
-            transition: transform .25s, box-shadow .25s;
-        }
-        .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 32px rgba(108,99,255,.25);
-        }
 
         /* --- Unit card --- */
         .unit-card {
             background: var(--card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--border);
-            border-radius: 1.25rem;
-            transition: transform .25s, box-shadow .25s, border-color .25s;
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04);
+            transition: transform .3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .3s ease, border-color .3s ease, background-color .3s ease;
             position: relative;
             overflow: hidden;
         }
         .unit-card.unlocked:hover {
-            transform: translateY(-4px);
-            border-color: var(--purple);
-            box-shadow: 0 12px 40px rgba(108,99,255,.3);
+            transform: translateY(-6px) scale(1.02);
+            border-color: rgba(108,99,255,0.3);
+            box-shadow: 0 18px 40px rgba(0,0,0,0.25), 0 0 24px rgba(108,99,255,0.12), inset 0 1px 0 rgba(255,255,255,0.06);
+            background: rgba(22,26,45,0.85);
         }
         .unit-card.locked {
-            opacity: .5;
+            opacity: .65;
             cursor: not-allowed;
+            filter: grayscale(100%);
+            box-shadow: none;
         }
         .unit-card .card-glow {
             position: absolute;
             inset: 0;
-            background: radial-gradient(circle at 30% 20%, rgba(108,99,255,.08) 0%, transparent 70%);
+            background: radial-gradient(circle at 50% 0%, rgba(108,99,255,.12) 0%, transparent 60%);
             pointer-events: none;
+            opacity: 0.6;
+            transition: opacity .3s ease;
+        }
+        .unit-card.unlocked:hover .card-glow {
+            opacity: 1;
         }
 
         /* --- Progress bar inside unit card --- */
         .unit-progress-bar {
-            background: rgba(108,99,255,.15);
+            background: rgba(255,255,255,0.04);
             border-radius: 9999px;
-            height: 6px;
+            height: 8px;
             overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
         }
         .unit-progress-fill {
             height: 100%;
             border-radius: 9999px;
-            transition: width 1s cubic-bezier(.4,0,.2,1);
+            transition: width 1.2s cubic-bezier(.4,0,.2,1);
+            position: relative;
+            overflow: hidden;
+        }
+        .unit-progress-fill::after {
+            content:'';
+            position:absolute;
+            top:0; left:0; right:0; bottom:0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: translateX(-100%);
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
         }
 
         /* --- Fade in on load --- */
@@ -94,6 +89,19 @@
         .delay-2 { animation-delay: .16s; }
         .delay-3 { animation-delay: .24s; }
         .delay-4 { animation-delay: .32s; }
+
+        /* --- Custom Stat Card --- */
+        .stat-card {
+            background: rgba(19,22,42,0.6);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            transition: transform .3s ease, border-color .3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.1);
+        }
 
         /* --- Badge pill --- */
         .badge {
@@ -112,95 +120,77 @@
         ::-webkit-scrollbar-thumb { background: rgba(108,99,255,.4); border-radius: 9999px; }
     </style>
 
-    <div class="max-w-5xl mx-auto px-4 py-10">
+    <div class="px-4 py-6">
 
-        {{-- ===== GREETING ===== --}}
+        {{-- ===== GREETING & EMOTIONAL UX ===== --}}
         <div class="fade-up mb-10">
-            <p class="font-dm text-sm mb-1" style="color:var(--text-muted);">
-                {{ now()->locale('id')->isoFormat('dddd, D MMMM YYYY') }}
+            @php
+                $hour = now()->format('H');
+                $greeting = 'Halo';
+                if ($hour < 12) $greeting = 'Selamat pagi';
+                elseif ($hour < 15) $greeting = 'Selamat siang';
+                elseif ($hour < 18) $greeting = 'Selamat sore';
+                else $greeting = 'Selamat malam';
+
+                $messages = [
+                    'Kamu luar biasa, lanjutkan!',
+                    'Setiap langkah kecil membawamu lebih dekat ke tujuan.',
+                    'Fokus dan konsistensi adalah kunci.',
+                    'Terus belajar, jangan menyerah!',
+                    'Lexora bangga dengan progresmu hari ini!'
+                ];
+                $randomMsg = $messages[array_rand($messages)];
+            @endphp
+            <p class="font-dm text-sm mb-1 font-semibold tracking-wide" style="color:var(--text-muted);">
+                {{ now()->locale('id')->isoFormat('dddd, D MMMM') }}
             </p>
-            <h1 class="font-syne font-extrabold text-white leading-tight"
+            <h1 class="font-syne font-extrabold text-themeText leading-tight mb-2"
                 style="font-size:clamp(1.8rem,4vw,2.5rem);">
-                Halo, {{ $user->name }} 👋
+                {{ $greeting }}, {{ explode(' ', $user->name)[0] }} 👋
             </h1>
-            <p class="font-dm mt-1" style="color:var(--text-muted);">
-                Teruslah belajar — setiap kata membawamu lebih jauh.
+            <p class="font-dm text-sm" style="color:var(--purple); opacity: 0.9;">
+                {{ $randomMsg }}
             </p>
         </div>
 
-        {{-- ===== STATS ===== --}}
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 fade-up delay-1">
-
-            {{-- XP --}}
-            <div class="stat-card p-5">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                         style="background:rgba(108,99,255,.15);">⚡</div>
-                    <span class="font-syne font-semibold text-white text-sm">Total XP</span>
+        {{-- ===== DAILY GOAL ===== --}}
+        @php
+            // Calculate daily goal logic inline for display
+            $lastPlayed = $user->last_played_at ? clone $user->last_played_at->startOfDay() : null;
+            $today = now()->startOfDay();
+            $dailyGoal = ($lastPlayed && $lastPlayed->eq($today)) ? ($user->daily_goal_progress ?? 0) : 0;
+            $goalTarget = 3;
+            $goalPercent = min(100, ($dailyGoal / $goalTarget) * 100);
+            $goalDone = $dailyGoal >= $goalTarget;
+        @endphp
+        
+        <div class="fade-up delay-1 mb-10 stat-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group cursor-default shadow-[0_8px_30px_rgba(0,0,0,0.12)] border-[rgba(255,255,255,0.04)]">
+            <div class="flex items-center gap-5">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-transform group-hover:scale-105 duration-300
+                    {{ $goalDone ? 'bg-[rgba(6,214,160,0.15)] text-[#06d6a0] glow-green' : 'bg-[rgba(108,99,255,0.15)] text-[var(--purple)] glow-purple' }}">
+                    {{ $goalDone ? '🎉' : '🎯' }}
                 </div>
-                <p class="font-syne font-extrabold text-3xl" style="color:var(--purple);">
-                    {{ number_format($user->xp) }}
-                </p>
-
-                {{-- XP Progress to next level --}}
-                @php
-                    $xpInLevel   = $user->xp % 100;
-                    $xpNeeded    = 100;
-                    $xpPercent   = ($xpInLevel / $xpNeeded) * 100;
-                @endphp
-                <div class="mt-3">
-                    <div class="flex justify-between text-xs mb-1" style="color:var(--text-muted);">
-                        <span>{{ $xpInLevel }} / {{ $xpNeeded }} XP</span>
-                        <span>Level {{ $user->level + 1 }}</span>
+                <div>
+                    <h3 class="font-syne font-extrabold text-xl mb-1 group-hover:text-[var(--text)] transition-colors text-[var(--text-muted)]">Target Harian</h3>
+                    <p class="text-sm font-medium" style="color:var(--text-muted); opacity: 0.85;">
+                        {{ $goalDone ? 'Luar biasa! Target hari ini selesai. (+50 XP)' : 'Selesaikan ' . $goalTarget . ' lesson hari ini untuk bonus XP!' }}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="w-full sm:w-1/3 min-w-[200px]">
+                <div class="flex justify-between text-xs mb-2 font-bold" style="color:var(--text-muted);">
+                    <span>Progress</span>
+                    <span style="color:{{ $goalDone ? 'var(--green)' : 'var(--purple)' }}; {{ $goalDone ? 'text-shadow: 0 0 10px rgba(6,214,160,0.5);' : '' }}">
+                        {{ $dailyGoal }} / {{ $goalTarget }} Lesson
+                    </span>
+                </div>
+                <div class="unit-progress-bar" x-data="{ width: 0 }" x-init="setTimeout(() => width = {{ $goalPercent }}, 200)">
+                    <div class="unit-progress-fill glow-{{ $goalDone ? 'green' : 'purple' }}"
+                         :style="`width: ${width}%; background: {{ $goalDone ? 'linear-gradient(90deg, #06d6a0, #0abf7e)' : 'linear-gradient(90deg, #6c63ff, #8b85ff)' }}`">
                     </div>
-                    <div class="xp-bar-track rounded-full overflow-hidden" style="height:6px;background:rgba(108,99,255,.15);">
-                        <div class="xp-bar-fill rounded-full" style="width:{{ $xpPercent }}%; height:100%;"></div>
-                    </div>
                 </div>
             </div>
-
-            {{-- LEVEL --}}
-            <div class="stat-card p-5">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                         style="background:rgba(255,209,102,.12);">🏆</div>
-                    <span class="font-syne font-semibold text-white text-sm">Level</span>
-                </div>
-                <p class="font-syne font-extrabold text-3xl" style="color:var(--gold);">
-                    {{ $user->level }}
-                </p>
-                <p class="text-xs mt-2" style="color:var(--text-muted);">
-                    @if($user->level < 5)   Pemula
-                    @elseif($user->level < 10) Menengah
-                    @elseif($user->level < 20) Mahir
-                    @else Expert
-                    @endif
-                </p>
-            </div>
-
-            {{-- STREAK --}}
-            <div class="stat-card p-5">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                         style="background:rgba(6,214,160,.12);">🔥</div>
-                    <span class="font-syne font-semibold text-white text-sm">Streak</span>
-                </div>
-                <p class="font-syne font-extrabold text-3xl" style="color:var(--green);">
-                    {{ $user->streak }} <span class="text-base font-semibold">hari</span>
-                </p>
-                <p class="text-xs mt-2" style="color:var(--text-muted);">
-                    @if($user->streak >= 7)
-                        🏅 Luar biasa! Terus pertahankan!
-                    @elseif($user->streak >= 3)
-                        💪 Kamu sedang on fire!
-                    @elseif($user->streak >= 1)
-                        ✨ Bagus, jangan berhenti!
-                    @else
-                        Mulai streakmu hari ini!
-                    @endif
-                </p>
-            </div>
-
         </div>
 
         {{-- ===== FLASH MESSAGE ===== --}}
@@ -224,16 +214,16 @@
         <div class="fade-up delay-3">
 
             <div class="flex items-center justify-between mb-5">
-                <h2 class="font-syne font-bold text-white text-xl">Unit Pembelajaran</h2>
-                <span class="badge" style="background:rgba(108,99,255,.15); color:var(--purple);">
+                <h2 class="font-syne font-extrabold text-themeText text-2xl tracking-tight">Unit Pembelajaran</h2>
+                <span class="badge border border-[var(--border)] shadow-sm" style="background:rgba(108,99,255,.15); color:var(--purple);">
                     {{ $units->count() }} Unit
                 </span>
             </div>
 
             @if($units->isEmpty())
-                <div class="rounded-2xl p-10 text-center" style="background:var(--card); border:1px solid var(--border);">
+                <div class="rounded-2xl p-10 text-center card">
                     <p class="text-4xl mb-3">📚</p>
-                    <p class="font-syne font-semibold text-white">Belum ada unit tersedia</p>
+                    <p class="font-syne font-semibold text-themeText">Belum ada unit tersedia</p>
                     <p class="text-sm mt-1" style="color:var(--text-muted);">Hubungi administrator untuk menambahkan konten.</p>
                 </div>
             @else
@@ -262,26 +252,26 @@
                                 </div>
 
                                 @if(!$isUnlocked)
-                                    <span class="badge" style="background:rgba(255,255,255,.06); color:var(--text-muted);">
+                                    <span class="badge border border-[var(--border)]" style="background:rgba(255,255,255,.05); color:var(--text-muted); box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                                         🔒 Terkunci
                                     </span>
                                 @elseif($isDone)
-                                    <span class="badge" style="background:rgba(6,214,160,.12); color:var(--green);">
+                                    <span class="badge border border-[#06d6a0]/20" style="background:rgba(6,214,160,.12); color:var(--green); box-shadow: 0 2px 12px rgba(6,214,160,0.15);">
                                         ✅ Selesai
                                     </span>
                                 @else
-                                    <span class="badge" style="background:rgba(108,99,255,.12); color:var(--purple);">
+                                    <span class="badge border border-[var(--purple)]/20" style="background:rgba(108,99,255,.12); color:var(--purple); box-shadow: 0 2px 12px rgba(108,99,255,0.15);">
                                         ▶ Lanjutkan
                                     </span>
                                 @endif
                             </div>
 
                             {{-- Title & desc --}}
-                            <h3 class="font-syne font-bold text-white text-base leading-snug mb-1">
+                            <h3 class="font-syne font-extrabold text-themeText text-lg leading-snug mb-1.5 tracking-tight group-hover:text-[var(--purple)] transition-colors">
                                 {{ $unit->title }}
                             </h3>
                             @if($unit->description)
-                            <p class="text-xs leading-relaxed mb-4" style="color:var(--text-muted);">
+                            <p class="text-sm leading-relaxed mb-5" style="color:var(--text-muted); opacity: 0.85;">
                                 {{ Str::limit($unit->description, 80) }}
                             </p>
                             @endif
@@ -295,18 +285,15 @@
                             {{-- Progress bar --}}
                             @if($isUnlocked)
                             <div>
-                                <div class="flex justify-between text-xs mb-1" style="color:var(--text-muted);">
+                                <div class="flex justify-between text-xs mb-1.5 font-semibold" style="color:var(--text-muted);">
                                     <span>Progress</span>
-                                    <span style="color:{{ $isDone ? 'var(--green)' : 'var(--purple)' }}">
+                                    <span style="color:{{ $isDone ? 'var(--green)' : 'var(--purple)' }}; text-shadow: 0 0 8px {{ $isDone ? 'rgba(6,214,160,0.4)' : 'rgba(108,99,255,0.4)' }};">
                                         {{ $progress }}%
                                     </span>
                                 </div>
-                                <div class="unit-progress-bar">
-                                    <div class="unit-progress-fill"
-                                         style="width:{{ $progress }}%;
-                                                background: {{ $isDone
-                                                    ? 'linear-gradient(90deg,#06d6a0,#0abf7e)'
-                                                    : 'linear-gradient(90deg,#6c63ff,#9b94ff)' }};">
+                                <div class="unit-progress-bar" x-data="{ width: 0 }" x-init="setTimeout(() => width = {{ $progress }}, 100)">
+                                    <div class="unit-progress-fill glow-{{ $isDone ? 'green' : 'purple' }}"
+                                         :style="`width: ${width}%; background: {{ $isDone ? 'linear-gradient(90deg, #06d6a0, #0abf7e)' : 'linear-gradient(90deg, #6c63ff, #8b85ff)' }}`">
                                     </div>
                                 </div>
                             </div>

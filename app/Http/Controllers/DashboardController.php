@@ -24,55 +24,24 @@ class DashboardController extends Controller
             ->pluck('lesson_id')
             ->toArray();
 
-        // Hitung status lock/unlock tiap unit
-        $units = $units->map(function (Unit $unit, int $index) use ($completedLessonIds) {
-            return $this->resolveUnitLockStatus($unit, $index, $completedLessonIds);
+        // Hitung status lock/unlock dan progress tiap unit
+        $units = $units->map(function (Unit $unit) use ($completedLessonIds) {
+            // Set status unlocked menggunakan method di model
+            $unit->unlocked = $unit->isUnlockedFor($completedLessonIds);
+
+            // Hitung progress
+            $totalLessons = $unit->lessons->count();
+            if ($totalLessons > 0) {
+                $unitLessonIds = $unit->lessons->pluck('id')->toArray();
+                $completedInUnit = count(array_intersect($unitLessonIds, $completedLessonIds));
+                $unit->progress = round(($completedInUnit / $totalLessons) * 100);
+            } else {
+                $unit->progress = 0;
+            }
+
+            return $unit;
         });
 
         return view('dashboard.index', compact('user', 'units'));
-    }
-
-    // =====================================================================
-    // PRIVATE HELPERS
-    // =====================================================================
-
-    /**
-     * Tentukan status unlock unit berdasarkan index dan progress user.
-     *
-     * Aturan:
-     *   - Unit pertama (index 0) selalu terbuka
-     *   - Unit berikutnya terbuka HANYA jika semua lesson di unit sebelumnya selesai
-     *
-     * @param  Unit   $unit
-     * @param  int    $index             Urutan unit (0-based)
-     * @param  array  $completedLessonIds Array lesson_id yang sudah selesai
-     */
-    private function resolveUnitLockStatus(Unit $unit, int $index, array $completedLessonIds): Unit
-    {
-        if ($index === 0) {
-            $unit->is_locked = false;
-            return $unit;
-        }
-
-        // Dapatkan unit sebelumnya (sudah terurut by order, jadi pakai index)
-        // Kita cek dari semua lesson di unit sebelumnya apakah semua selesai
-        // Karena kita map() secara berurutan, kita perlu query ulang unit sebelumnya
-        // Solusi: cek apakah semua lesson milik unit ini sudah selesai semua
-        // (unit ini terbuka jika prevUnit selesai — kita simpan flag unlocked dari sebelumnya)
-
-        // Ambil lesson_id milik unit sebelumnya
-        $prevUnitLessonIds = Unit::orderBy('order')
-            ->skip($index - 1)
-            ->first()
-            ?->lessons()
-            ->pluck('id')
-            ->toArray() ?? [];
-
-        $allCompleted = count($prevUnitLessonIds) > 0
-            && count(array_diff($prevUnitLessonIds, $completedLessonIds)) === 0;
-
-        $unit->is_locked = ! $allCompleted;
-
-        return $unit;
     }
 }

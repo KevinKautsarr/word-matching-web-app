@@ -8,29 +8,12 @@ use App\Models\UserXpLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class GameController extends Controller
 {
-    /**
-     * Level threshold XP per level.
-     * Level naik setiap kelipatan 100 XP.
-     */
-    private const XP_PER_LEVEL = 100;
-
-    /**
-     * Minimal skor (%) agar lesson dianggap selesai.
-     */
-    private const PASS_SCORE_PERCENT = 70;
-
-    // =====================================================================
-    // PLAY
-    // =====================================================================
-
-    /**
-     * Tampilkan halaman permainan Word Matching untuk sebuah lesson.
-     */
-    public function play(int $lesson_id): View|RedirectResponse
+    public function play(int $lesson_id)
     {
         $lesson = Lesson::with('vocabularies')->findOrFail($lesson_id);
         $user   = Auth::user();
@@ -40,172 +23,161 @@ class GameController extends Controller
                 ->with('error', 'Lesson ini belum memiliki kosakata. Coba lagi nanti.');
         }
 
-        // Acak urutan vocabulary untuk variasi soal
         $vocabularies = $lesson->vocabularies->shuffle();
 
         return view('game.play', compact('lesson', 'vocabularies', 'user'));
     }
 
-    // =====================================================================
-    // SUBMIT
-    // =====================================================================
-
-    /**
-     * Proses pengumpulan jawaban game Word Matching.
-     * Hitung skor, update progress, dan berikan XP jika lulus.
-     */
-    public function submit(Request $request, int $lesson_id): RedirectResponse
+    public function submit(Request $request, int $lessonId)
     {
         $request->validate([
-            'answers'    => ['required', 'array'],
-            'answers.*'  => ['nullable', 'integer'],
-            'time_spent' => ['required', 'integer', 'min:0'],
+            'score'   => 'required|numeric',
+            'correct' => 'required|numeric',
+            'total'   => 'required|numeric',
         ]);
 
-        $lesson = Lesson::with('vocabularies')->findOrFail($lesson_id);
-        $user   = Auth::user();
+        $user = Auth::user();
+        $lesson = Lesson::with('unit')->findOrFail($lessonId);
 
-        // Hitung skor
-        $score        = $this->calculateScore($request->answers, $lesson);
-        $total        = $lesson->vocabularies->count();
-        $scorePercent = $total > 0 ? (int) round(($score / $total) * 100) : 0;
-        $isPassed     = $scorePercent >= self::PASS_SCORE_PERCENT;
+        $correct = (int) $request->correct;
+        $total   = (int) $request->total;
+        $score   = (int) $request->score;
 
-        // Simpan / update progress
-        $progress = $this->upsertProgress($user, $lesson, $scorePercent, $isPassed, $request->time_spent);
-
-        // Berikan XP hanya jika lulus DAN pertama kali atau improve score
-        if ($isPassed) {
-            $this->grantXp($user, $lesson, $progress);
+        $xpEarned = 0;
+        if ($total > 0) {
+            $xpEarned = round(($correct / $total) * $lesson->xp_reward);
         }
 
-        // Simpan hasil ke session untuk halaman result
+        $isCompleted = false;
+        if ($total > 0 && $correct >= ($total * 0.6)) {
+            $isCompleted = true;
+        }
+
+        DB::transaction(function () use ($user, $lesson, $correct, $total, $score, $isCompleted, &$xpEarned) {
+            $progress = UserProgress::firstOrNew([
+                'user_id'   => $user->id,
+                'lesson_id' => $lesson->id
+            ]);
+
+            $wasCompleted = $progress->exists && $progress->is_completed;
+
+            $progress->attempts = ($progress->attempts ?? 0) + 1;
+            // Pertahankan status completed jika sebelumnya sudah pernah selesai
+            $progress->is_completed = $progress->is_completed || $isCompleted;
+            $progress->score = max((int)$progress->score, $score);
+            $progress->time_spent = 60;
+            $progress->save();
+
+            // Daily Goal & Streak Logic
+            $today = now()->startOfDay();
+            $lastPlayedDate = $user->last_played_at ? clone $user->last_played_at->startOfDay() : null;
+
+            if (!$lastPlayedDate || $lastPlayedDate->ne($today)) {
+                $user->daily_goal_progress = 0; // Reset daily goal progress for new day
+            }
+            $user->daily_goal_progress += 1;
+
+            if ($user->daily_goal_progress === 3) {
+                $xpEarned += 50;
+                session()->flash('success_goal', 'Kamu menyelesaikan target harian 3 lesson! Bonus +50 XP 🎉');
+            }
+
+            // Streak check
+            if ($lastPlayedDate && $lastPlayedDate->eq(now()->subDay()->startOfDay())) {
+                $user->streak += 1;
+                session()->flash('streak_up', true); // trigger animation in frontend
+                if ($user->streak % 7 === 0) {
+                    $xpEarned += 100;
+                    session()->flash('success_streak', 'Streak ' . $user->streak . ' Hari! Bonus +100 XP 🔥');
+                }
+            } elseif (!$lastPlayedDate || $lastPlayedDate->lt(now()->subDay()->startOfDay())) {
+                // Streak loss or first time
+                $user->streak = 1;
+            }
+
+            $user->last_played_at = now();
+
+            // Perfect Score Bonus
+            if ($correct === $total && $total > 0) {
+                $xpEarned += 15;
+                session()->flash('perfect_score', 'Perfect! Bonus +15 XP 🎯');
+            }
+
+            // Hanya berikan XP basik jika sekarang completed DAN belum pernah di-completed sebelumnya
+            // Namun bonus streak / daily goal / perfect score selalu diberikan
+            // Wait, to prevent farming, let's only give base XP if it was not completed previously.
+            // But perfect score bonus and daily goals should be given. We just update User's total XP.
+            if ($isCompleted && !$wasCompleted) {
+                // Base $xpEarned includes calculated (correct/total)*reward + bonuses.
+            } elseif ($wasCompleted) {
+                // If it was already completed, remove the base lesson reward from xpEarned, 
+                // keeping only perfect score and daily goal bonuses!
+                $baseReward = round(($correct / $total) * $lesson->xp_reward);
+                $xpEarned -= $baseReward; 
+            }
+
+            if ($xpEarned > 0) {
+                $user->xp += $xpEarned;
+                $user->level = floor($user->xp / 100) + 1;
+
+                UserXpLog::create([
+                    'user_id'   => $user->id,
+                    'xp_gained' => $xpEarned,
+                    'activity'  => 'Penyelesaian lesson: ' . $lesson->title . ' + Bonus'
+                ]);
+            }
+            
+            $user->save();
+        });
+
         session([
             'game_result' => [
-                'lesson_id'     => $lesson_id,
-                'score'         => $scorePercent,
-                'correct'       => $score,
-                'total'         => $total,
-                'is_passed'     => $isPassed,
-                'xp_gained'     => $isPassed ? $lesson->xp_reward : 0,
-                'time_spent'    => $request->time_spent,
-                'attempts'      => $progress->attempts,
-            ],
+                'score'      => $score,
+                'correct'    => $correct,
+                'total'      => $total,
+                'time_spent' => 60,
+                'xp_earned'  => $xpEarned,
+                'completed'  => $isCompleted
+            ]
         ]);
 
-        return redirect()->route('game.result', $lesson_id);
-    }
+        $nextLesson = Lesson::where('unit_id', $lesson->unit_id)
+            ->where('order', '>', $lesson->order)
+            ->orderBy('order')
+            ->first();
 
-    // =====================================================================
-    // RESULT
-    // =====================================================================
+        $redirectUrl = $nextLesson 
+            ? route('lessons.show', $nextLesson->id) 
+            : route('units.show', $lesson->unit_id);
 
-    /**
-     * Tampilkan halaman hasil permainan.
-     */
-    public function result(int $lesson_id): View|RedirectResponse
-    {
-        $result = session('game_result');
-
-        if (! $result || $result['lesson_id'] !== $lesson_id) {
-            return redirect()->route('lessons.show', $lesson_id)
-                ->with('error', 'Tidak ada hasil permainan yang ditemukan.');
-        }
-
-        $lesson = Lesson::with('unit')->findOrFail($lesson_id);
-        $user   = Auth::user();
-
-        return view('game.result', compact('lesson', 'result', 'user'));
-    }
-
-    // =====================================================================
-    // PRIVATE HELPERS
-    // =====================================================================
-
-    /**
-     * Hitung jumlah jawaban benar dari input user.
-     *
-     * Format answers: ['vocabulary_id' => 'matched_vocabulary_id']
-     * Jawaban benar: vocabulary_id == matched_vocabulary_id (pasangan dirinya sendiri)
-     *
-     * @param  array   $answers   Array jawaban dari form
-     * @param  Lesson  $lesson    Lesson yang sedang dikerjakan
-     * @return int                Jumlah jawaban benar
-     */
-    private function calculateScore(array $answers, Lesson $lesson): int
-    {
-        $correct = 0;
-
-        foreach ($answers as $vocabId => $matchedId) {
-            // Jawaban benar = vocab dipasangkan dengan id-nya sendiri
-            if ((int) $vocabId === (int) $matchedId) {
-                $correct++;
-            }
-        }
-
-        return $correct;
-    }
-
-    /**
-     * Buat atau perbarui record UserProgress.
-     * Simpan score terbaik, increment attempts.
-     */
-    private function upsertProgress($user, Lesson $lesson, int $scorePercent, bool $isPassed, int $timeSpent): UserProgress
-    {
-        $progress = UserProgress::firstOrNew([
-            'user_id'   => $user->id,
-            'lesson_id' => $lesson->id,
+        return response()->json([
+            'redirect' => $redirectUrl
         ]);
-
-        // Simpan score terbaik
-        $progress->score        = max($progress->score ?? 0, $scorePercent);
-        $progress->is_completed = $progress->is_completed || $isPassed;
-        $progress->time_spent   = $timeSpent;
-        $progress->attempts     = ($progress->attempts ?? 0) + 1;
-        $progress->save();
-
-        return $progress;
     }
 
-    /**
-     * Berikan XP ke user dan catat ke user_xp_logs.
-     * Juga periksa apakah user naik level.
-     */
-    private function grantXp($user, Lesson $lesson, UserProgress $progress): void
+    public function result(int $lessonId)
     {
-        // Hanya beri XP pada attempt pertama yang lulus (atau jika belum pernah dapat XP)
-        $alreadyRewarded = UserXpLog::where('user_id', $user->id)
-            ->where('activity', 'lesson_completed:' . $lesson->id)
-            ->exists();
+        $user = Auth::user();
+        $lesson = Lesson::with('unit')->findOrFail($lessonId);
+        
+        $progress = $user->progress()->where('lesson_id', $lesson->id)->first();
+        
+        $nextLesson = Lesson::where('unit_id', $lesson->unit_id)
+            ->where('order', '>', $lesson->order)
+            ->orderBy('order')
+            ->first();
 
-        if ($alreadyRewarded) {
-            return;
-        }
+        $sessionData = session('game_result', []);
 
-        $xpGained = $lesson->xp_reward;
+        $result = [
+            'score'      => $sessionData['score'] ?? 0,
+            'correct'    => $sessionData['correct'] ?? 0,
+            'total'      => $sessionData['total'] ?? 0,
+            'time_spent' => $sessionData['time_spent'] ?? 60,
+            'xp_earned'  => $sessionData['xp_earned'] ?? 0,
+            'completed'  => $sessionData['completed'] ?? false
+        ];
 
-        // Catat riwayat XP
-        UserXpLog::create([
-            'user_id'   => $user->id,
-            'xp_gained' => $xpGained,
-            'activity'  => 'lesson_completed:' . $lesson->id,
-        ]);
-
-        // Update XP user
-        $user->xp += $xpGained;
-
-        // Cek naik level
-        $user->level = $this->calculateLevel($user->xp);
-
-        $user->save();
-    }
-
-    /**
-     * Hitung level berdasarkan total XP.
-     * Setiap kelipatan XP_PER_LEVEL = 1 level.
-     */
-    private function calculateLevel(int $totalXp): int
-    {
-        return (int) floor($totalXp / self::XP_PER_LEVEL) + 1;
+        return view('game.result', compact('user', 'lesson', 'progress', 'nextLesson', 'result'));
     }
 }

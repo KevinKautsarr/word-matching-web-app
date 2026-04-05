@@ -2,8 +2,10 @@
 
 @section('title', $lesson->title . ' — LEXORA')
 
+@section('nav_header', $lesson->unit->title . ', ' . $lesson->title)
+
 @section('content')
-<div class="min-h-screen" style="background:#0d0f1a; font-family:'DM Sans',sans-serif;">
+<div class="font-dm">
 
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
@@ -137,19 +139,10 @@
 
     <div class="max-w-3xl mx-auto px-4 py-10">
 
-        {{-- ===== BREADCRUMB ===== --}}
-        <nav class="fade-up flex items-center gap-2 mb-8 font-dm text-sm flex-wrap" style="color:var(--text-muted);">
-            <a href="{{ route('dashboard') }}" class="breadcrumb-link">Dashboard</a>
-            <span style="color:var(--border);">›</span>
-            <a href="{{ route('units.show', $lesson->unit->id) }}" class="breadcrumb-link">
-                {{ $lesson->unit->title ?? 'Unit' }}
-            </a>
-            <span style="color:var(--border);">›</span>
-            <span class="text-white font-medium">{{ $lesson->title }}</span>
-        </nav>
+
 
         {{-- ===== COMPLETED BANNER ===== --}}
-        @if($completed)
+        @if(isset($completed) && $completed)
         <div class="fade-up mb-5 rounded-xl px-5 py-3 flex items-center gap-3 text-sm font-dm"
              style="background:rgba(6,214,160,.1); border:1px solid rgba(6,214,160,.3); color:var(--green);">
             <span class="text-lg">✅</span>
@@ -232,8 +225,8 @@
         {{-- ===== CTA BUTTON ===== --}}
         <div class="fade-up delay-3">
             <a href="{{ route('game.play', $lesson->id) }}"
-               class="btn-cta {{ $completed ? 'btn-cta-retry' : 'btn-cta-start' }}">
-                {{ $completed ? '🔄 Ulangi Game' : '🎯 Mulai Word Matching' }}
+               class="btn-cta {{ (isset($completed) && $completed) ? 'btn-cta-retry' : 'btn-cta-start' }}">
+                {{ (isset($completed) && $completed) ? '🔄 Ulangi Game' : '🎯 Mulai Word Matching' }}
             </a>
         </div>
 

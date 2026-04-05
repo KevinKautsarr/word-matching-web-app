@@ -29,7 +29,9 @@ class LessonController extends Controller
             ->where('lesson_id', $lesson->id)
             ->first();
 
-        return view('lessons.show', compact('lesson', 'user', 'progress'));
+        $completed = $progress?->is_completed ?? false;
+
+        return view('lessons.show', compact('lesson', 'user', 'completed'));
     }
 
     // =====================================================================

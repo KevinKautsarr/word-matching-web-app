@@ -64,4 +64,37 @@ class Unit extends Model
     {
         return $query->orderBy('order');
     }
+
+    /**
+     * Cek apakah unit ini terbuka (tidak terkunci) untuk user.
+     * Menggunakan parameter completedLessonIds agar lebih efisien.
+     */
+    public function isUnlockedFor(array $completedLessonIds): bool
+    {
+        // Prioritas 1: Jika dari database is_locked = false, PASTI TERBUKA
+        if (! $this->is_locked) {
+            return true;
+        }
+
+        // Prioritas 2: Jika is_locked = true, cek unit sebelumnya
+        $prevUnit = self::where('order', '<', $this->order)
+            ->orderBy('order', 'desc')
+            ->first();
+
+        // Jika tidak ada unit sebelumnya (unit paling pertama), maka default terbuka
+        if (! $prevUnit) {
+            return true;
+        }
+
+        $prevLessonIds = $prevUnit->lessons()->pluck('id')->toArray();
+
+        // Jika unit sebelumnya tidak memiliki lesson sama sekali, langsung terbuka
+        if (empty($prevLessonIds)) {
+            return true;
+        }
+
+        // Cek apakah semua lesson di unit sebelumnya sudah diselesaikan
+        // Yaitu jika tidak ada id lesson sebelumnya yang belum ada di array completed
+        return count(array_diff($prevLessonIds, $completedLessonIds)) === 0;
+    }
 }
