@@ -57,33 +57,53 @@
         }
 
         * {
-            transition: all 0.25s ease;
+            transition: all 0.18s ease-out;
         }
 
         body { 
             font-family: 'DM Sans', sans-serif; 
-            background-color: var(--bg); 
+            background: radial-gradient(circle at center, rgba(15,18,32,0) 50%, rgba(15,18,32,0.8) 100%), #0f1220;
             color: var(--text); 
             position: relative;
         }
 
-        /* --- Ambient Gradient + Grain --- */
-        .ambient-bg {
+        body::before {
+            content: '';
             position: fixed;
             inset: 0;
-            z-index: -1;
+            z-index: -2;
             pointer-events: none;
             background: 
-                radial-gradient(circle at 15% 50%, rgba(108,99,255,0.05) 0%, transparent 50%),
-                radial-gradient(circle at 85% 30%, rgba(6,214,160,0.04) 0%, transparent 50%);
+                radial-gradient(circle at 10% 20%, rgba(108,99,255,0.12), transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(0,255,180,0.06), transparent 60%);
         }
-        .grain-overlay {
+
+        body::after {
+            content: '';
             position: fixed;
             inset: 0;
             z-index: -1;
             pointer-events: none;
-            opacity: 0.25;
+            opacity: 0.02;
+            mix-blend-mode: overlay;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 2;
+        }
+
+        .main-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background: rgba(0,0,0,0.15);
+            backdrop-filter: blur(50px);
+            -webkit-backdrop-filter: blur(50px);
+            border-radius: 24px;
+            box-shadow: 0 0 100px rgba(108,99,255,0.05);
         }
 
         h1,h2,h3,h4,h5,h6,.font-syne { font-family: 'Syne', sans-serif; }
@@ -98,17 +118,22 @@
         .glass-hover:hover { filter: brightness(1.1); border-color: rgba(108,99,255,0.4); }
 
         .card {
-            background: var(--card);
-            backdrop-filter: blur(14px);
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(16px);
             border: 1px solid var(--border);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
             position: relative;
             overflow: hidden;
             border-radius: 1.25rem;
+            background-image: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
         }
         .card:hover {
-            transform: translateY(-3px) scale(1.01);
-            box-shadow: 0 12px 40px rgba(108,99,255,0.15);
+            transform: translateY(-4px) scale(1.015);
+            box-shadow: 0 12px 40px rgba(108,99,255,0.1);
+            border-color: rgba(108,99,255,0.2);
+        }
+        .card:active {
+            transform: scale(0.96);
         }
         .card::before {
             content:'';
@@ -176,11 +201,12 @@
         .sidebar-item:hover {
             color: var(--text);
             background: rgba(255,255,255,0.04);
-            transform: translateX(4px);
+            transform: scale(1.02) translateX(4px);
         }
         .sidebar-item:hover .menu-icon {
             opacity: 1;
             transform: scale(1.1);
+            text-shadow: 0 0 12px rgba(255,255,255,0.4);
         }
         .sidebar-item.active {
             color: var(--purple);
@@ -205,11 +231,11 @@
         }
 
         .badge-glass {
-            background: rgba(19,22,42,0.4);
+            background: linear-gradient(135deg, rgba(19,22,42,0.4) 0%, rgba(19,22,42,0.2) 100%);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255,255,255,0.08);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.03);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.03);
             padding: 8px 14px;
             border-radius: 999px;
             font-size: 0.8rem;
@@ -218,13 +244,13 @@
             align-items: center;
             gap: 8px;
             cursor: default;
-            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all 0.18s ease-out;
         }
         .badge-glass:hover {
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08);
-            border-color: rgba(255,255,255,0.2);
-            background: rgba(19,22,42,0.7);
+            transform: translateY(-1px) scale(1.02);
+            box-shadow: 0 4px 16px rgba(108,99,255,0.15), inset 0 1px 0 rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.15);
+            background: rgba(19,22,42,0.6);
         }
 
     </style>
@@ -233,14 +259,12 @@
 </head>
 <body class="min-h-screen text-themeText font-dm flex bg-[var(--bg)]">
 
-    {{-- Ambient Grain + Gradient Layers --}}
-    <div class="ambient-bg"></div>
-    <div class="grain-overlay"></div>
+    {{-- Ambient Grain + Gradient Layers (Now using body::before & after) --}}
 
 {{-- ============================================================ --}}
 {{-- SIDEBAR NAVIGATION                                           --}}
 {{-- ============================================================ --}}
-<aside class="sidebar fixed inset-y-0 left-0 w-[240px] flex flex-col z-50">
+<aside x-data="{ moreOpen: false }" class="sidebar fixed inset-y-0 left-0 w-[240px] flex flex-col z-50">
     
     {{-- Logo --}}
     <div class="h-20 flex items-center px-6 mb-2 mt-2">
@@ -250,6 +274,23 @@
             </div>
             <span class="font-syne font-bold text-2xl tracking-tight text-white group-hover:drop-shadow-[0_0_8px_rgba(108,99,255,0.8)] transition-all">LEXORA</span>
         </a>
+    </div>
+
+    {{-- Profile Card (Top) --}}
+    <div class="px-4 mb-4">
+        @auth
+        <a href="{{ route('profile.index') }}" class="group block flex items-center gap-3 p-2.5 rounded-2xl bg-[rgba(255,255,255,0.03)] border border-transparent hover:border-[rgba(108,99,255,0.2)] hover:bg-[rgba(108,99,255,0.05)] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_30px_rgba(108,99,255,0.1)]">
+            <div class="w-10 h-10 rounded-full btn-primary flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-[0_4px_12px_rgba(108,99,255,0.3)] group-hover:scale-105 group-hover:shadow-[0_4px_24px_rgba(108,99,255,0.5)] transition-all">
+                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+            </div>
+            <div class="overflow-hidden flex-1">
+                <p class="font-syne font-bold text-sm text-[var(--text)] group-hover:text-[var(--purple)] transition-colors truncate">
+                    {{ explode(' ', auth()->user()->name)[0] }}
+                </p>
+                <p class="text-xs text-[var(--text-muted)] truncate">Level {{ auth()->user()->level }}</p>
+            </div>
+        </a>
+        @endauth
     </div>
 
     {{-- Menu Items --}}
@@ -282,35 +323,42 @@
             <span class="text-xl menu-icon">👤</span>
             <span>Profile</span>
         </a>
-        <a href="#" class="sidebar-item mt-6">
-            <span class="text-xl menu-icon">⋯</span>
-            <span>More</span>
-        </a>
+
+        {{-- More Dropdown --}}
+        <div class="pt-2">
+            <button @click="moreOpen = !moreOpen" class="w-full sidebar-item justify-between group">
+                <div class="flex items-center gap-3.5">
+                    <span class="text-xl menu-icon transition-transform" :class="moreOpen ? 'rotate-90' : ''">⋯</span>
+                    <span>More</span>
+                </div>
+                <span class="text-[10px] opacity-40 transition-transform" :class="moreOpen ? 'rotate-180' : ''">▼</span>
+            </button>
+            
+            <div x-show="moreOpen" 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="mt-1 ml-4 space-y-1 border-l border-[var(--border)] pl-2">
+                
+                <a href="#" class="sidebar-item !py-2 !px-3 text-sm opacity-80 hover:opacity-100">
+                    <span class="text-lg">⚙️</span>
+                    <span>Settings</span>
+                </a>
+                
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="w-full sidebar-item !py-2 !px-3 text-sm text-red-500/70 hover:text-red-400 hover:bg-red-500/10 transition-colors">
+                        <span class="text-lg">🚪</span>
+                        <span>Logout</span>
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 
-    {{-- Bottom Section (Profile & Logout) --}}
-    <div class="p-4 mt-auto border-t border-[var(--border)] pt-4">
-        @auth
-        <a href="{{ route('profile.index') }}" class="group block flex items-center gap-3 p-2.5 mb-3 rounded-2xl bg-[rgba(255,255,255,0.03)] border border-transparent hover:border-[rgba(108,99,255,0.2)] hover:bg-[rgba(108,99,255,0.05)] transition-all">
-            <div class="w-10 h-10 rounded-full btn-primary flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-[0_4px_12px_rgba(108,99,255,0.3)] group-hover:scale-110 group-hover:shadow-[0_4px_24px_rgba(108,99,255,0.5)] transition-all">
-                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-            </div>
-            <div class="overflow-hidden flex-1">
-                <p class="font-syne font-bold text-sm text-[var(--text)] group-hover:text-[var(--purple)] transition-colors truncate">
-                    {{ explode(' ', auth()->user()->name)[0] }}
-                </p>
-                <p class="text-xs text-[var(--text-muted)] truncate">Level {{ auth()->user()->level }}</p>
-            </div>
-        </a>
-        @endauth
-
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500/80 font-semibold hover:text-red-400 hover:bg-red-500/10 transition-colors">
-                <span class="text-xl">🚪</span>
-                <span class="text-sm">Logout</span>
-            </button>
-        </form>
+    {{-- Bottom Area (Simplified / Empty) --}}
+    <div class="p-4 mt-auto border-t border-[var(--border)] pt-4 opacity-40 hover:opacity-100 transition-opacity">
+        <p class="text-[10px] text-center font-syne uppercase tracking-widest">Lexora v1.0</p>
     </div>
 </aside>
 
@@ -324,7 +372,9 @@
         <div class="flex items-center gap-4">
             @auth
                 @php
-                    $lastPlayedDate = auth()->user()->last_played_at ? clone auth()->user()->last_played_at->startOfDay() : null;
+                    $lastPlayedDate = auth()->user()->last_played_at 
+                        ? \Carbon\Carbon::parse(auth()->user()->last_played_at)->startOfDay() 
+                        : null;
                     $isStreakAtRisk = $lastPlayedDate && $lastPlayedDate->eq(now()->subDay()->startOfDay());
                     $streakVal = auth()->user()->streak;
                     $isHotStreak = $streakVal >= 7;
@@ -354,6 +404,17 @@
 {{-- ============================================================ --}}
 {{-- FLASH MESSAGES                                               --}}
 {{-- ============================================================ --}}
+@if (session('game_success'))
+    <div id="game-success-trigger" class="fixed top-20 right-4 z-50 animate-in">
+        <div class="flex items-start gap-3 px-4 py-3 rounded-xl glass border border-[#ffd166]/40 glow-gold max-w-sm shadow-xl">
+            <div class="w-5 h-5 rounded-full bg-[#ffd166]/20 flex items-center justify-center shrink-0 mt-0.5">
+                <span class="text-xs">✨</span>
+            </div>
+            <p class="text-sm text-white leading-relaxed">{{ session('game_success') }}</p>
+        </div>
+    </div>
+@endif
+
 @if (session('success'))
     <div id="flash-msg" class="fixed top-20 right-4 z-50 animate-in">
         <div class="flex items-start gap-3 px-4 py-3 rounded-xl glass border border-[#06d6a0]/40 glow-green max-w-sm shadow-xl">
@@ -383,7 +444,7 @@
 {{-- ============================================================ --}}
 {{-- MAIN CONTENT                                                 --}}
 {{-- ============================================================ --}}
-    <main class="w-full max-w-[1100px] mx-auto p-8 page-transition pt-6">
+    <main class="main-container w-full max-w-[1100px] mx-auto p-8 page-transition pt-6">
         
         {{-- ============================================================ --}}
         {{-- CODDY STYLE NAVIGATION HEADER (BERBENTUK BACK + SECTION) --}}
@@ -434,18 +495,16 @@
     });
 
     // Auto-dismiss flash messages + Confetti triggers
-    const flashEl = document.getElementById('flash-msg');
-    if (flashEl) {
-        
-        // Trigger generic confetti if success alert happens
-        if (flashEl.innerHTML.includes('06d6a0') || flashEl.innerHTML.includes('success') || flashEl.innerHTML.includes('Bonus') || flashEl.innerHTML.includes('Streak')) {
+    // Auto-dismiss flash messages
+    document.querySelectorAll('#flash-msg, #game-success-trigger').forEach(el => {
+        // Trigger generic confetti & audio ONLY if it's a game success
+        if (el.id === 'game-success-trigger') {
             confetti({
                 particleCount: 150,
                 spread: 80,
                 origin: { y: 0.6 },
-                colors: ['#06d6a0', '#6c63ff', '#ffd166', '#ff6b6b']
+                colors: ['#ffd166', '#6c63ff', '#06d6a0']
             });
-            // Play success sound if global object injected
             if(window.Audio) {
                 let sfx = new Audio('/sounds/success.mp3');
                 sfx.volume = 0.5;
@@ -454,12 +513,12 @@
         }
 
         setTimeout(() => {
-            flashEl.style.transition = 'opacity 0.5s, transform 0.5s';
-            flashEl.style.opacity = '0';
-            flashEl.style.transform = 'translateY(-20px)';
-            setTimeout(() => flashEl.remove(), 500);
+            el.style.transition = 'opacity 0.5s, transform 0.5s';
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(-20px)';
+            setTimeout(() => el.remove(), 500);
         }, 4000);
-    }
+    });
 </script>
 
 @stack('scripts')

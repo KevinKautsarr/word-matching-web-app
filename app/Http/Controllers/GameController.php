@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class GameController extends Controller
@@ -69,8 +70,10 @@ class GameController extends Controller
             $progress->save();
 
             // Daily Goal & Streak Logic
-            $today = now()->startOfDay();
-            $lastPlayedDate = $user->last_played_at ? clone $user->last_played_at->startOfDay() : null;
+            $today = Carbon::now()->startOfDay();
+            $lastPlayedDate = $user->last_played_at 
+                ? Carbon::parse($user->last_played_at)->startOfDay() 
+                : null;
 
             if (!$lastPlayedDate || $lastPlayedDate->ne($today)) {
                 $user->daily_goal_progress = 0; // Reset daily goal progress for new day
@@ -79,7 +82,7 @@ class GameController extends Controller
 
             if ($user->daily_goal_progress === 3) {
                 $xpEarned += 50;
-                session()->flash('success_goal', 'Kamu menyelesaikan target harian 3 lesson! Bonus +50 XP 🎉');
+                session()->flash('game_success', 'Kamu menyelesaikan target harian 3 lesson! Bonus +50 XP 🎉');
             }
 
             // Streak check
@@ -88,19 +91,19 @@ class GameController extends Controller
                 session()->flash('streak_up', true); // trigger animation in frontend
                 if ($user->streak % 7 === 0) {
                     $xpEarned += 100;
-                    session()->flash('success_streak', 'Streak ' . $user->streak . ' Hari! Bonus +100 XP 🔥');
+                    session()->flash('game_success', 'Streak ' . $user->streak . ' Hari! Bonus +100 XP 🔥');
                 }
             } elseif (!$lastPlayedDate || $lastPlayedDate->lt(now()->subDay()->startOfDay())) {
                 // Streak loss or first time
                 $user->streak = 1;
             }
 
-            $user->last_played_at = now();
+            $user->last_played_at = Carbon::now();
 
             // Perfect Score Bonus
             if ($correct === $total && $total > 0) {
                 $xpEarned += 15;
-                session()->flash('perfect_score', 'Perfect! Bonus +15 XP 🎯');
+                session()->flash('game_success', 'Perfect! Bonus +15 XP 🎯');
             }
 
             // Hanya berikan XP basik jika sekarang completed DAN belum pernah di-completed sebelumnya

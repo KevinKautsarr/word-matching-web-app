@@ -18,21 +18,24 @@
 
         /* --- Unit card --- */
         .unit-card {
-            background: var(--card);
+            background: rgba(255,255,255,0.03);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border);
+            border: 1px solid rgba(255,255,255,0.06);
             border-radius: 1.5rem;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04);
-            transition: transform .3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .3s ease, border-color .3s ease, background-color .3s ease;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+            transition: all 0.18s ease-out;
             position: relative;
             overflow: hidden;
         }
         .unit-card.unlocked:hover {
-            transform: translateY(-6px) scale(1.02);
+            transform: translateY(-4px) scale(1.015);
             border-color: rgba(108,99,255,0.3);
-            box-shadow: 0 18px 40px rgba(0,0,0,0.25), 0 0 24px rgba(108,99,255,0.12), inset 0 1px 0 rgba(255,255,255,0.06);
-            background: rgba(22,26,45,0.85);
+            box-shadow: 0 16px 45px rgba(0,0,0,0.35), 0 0 30px rgba(108,99,255,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+        }
+        .unit-card.unlocked:active {
+            transform: translateY(0) scale(0.96);
         }
         .unit-card.locked {
             opacity: .65;
@@ -92,15 +95,18 @@
 
         /* --- Custom Stat Card --- */
         .stat-card {
-            background: rgba(19,22,42,0.6);
-            backdrop-filter: blur(14px);
-            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
             border-radius: 1.5rem;
-            transition: transform .3s ease, border-color .3s ease;
+            transition: all 0.18s ease-out;
         }
         .stat-card:hover {
-            transform: translateY(-2px);
-            border-color: rgba(255,255,255,0.1);
+            transform: translateY(-4px) scale(1.01);
+            border-color: rgba(6,214,160,0.3);
+            box-shadow: 0 16px 45px rgba(0,0,0,0.35), 0 0 35px rgba(6,214,160,0.15);
+            background: rgba(255,255,255,0.05);
         }
 
         /* --- Badge pill --- */
@@ -187,7 +193,7 @@
                 </div>
                 <div class="unit-progress-bar" x-data="{ width: 0 }" x-init="setTimeout(() => width = {{ $goalPercent }}, 200)">
                     <div class="unit-progress-fill glow-{{ $goalDone ? 'green' : 'purple' }}"
-                         :style="`width: ${width}%; background: {{ $goalDone ? 'linear-gradient(90deg, #06d6a0, #0abf7e)' : 'linear-gradient(90deg, #6c63ff, #8b85ff)' }}`">
+                         :style="`width: ${width}%; background: {{ $goalDone ? 'linear-gradient(90deg, #06d6a0, #0abf7e)' : 'linear-gradient(90deg, #6c63ff, #06d6a0)' }}`">
                     </div>
                 </div>
             </div>
@@ -293,7 +299,7 @@
                                 </div>
                                 <div class="unit-progress-bar" x-data="{ width: 0 }" x-init="setTimeout(() => width = {{ $progress }}, 100)">
                                     <div class="unit-progress-fill glow-{{ $isDone ? 'green' : 'purple' }}"
-                                         :style="`width: ${width}%; background: {{ $isDone ? 'linear-gradient(90deg, #06d6a0, #0abf7e)' : 'linear-gradient(90deg, #6c63ff, #8b85ff)' }}`">
+                                         :style="`width: ${width}%; background: {{ $isDone ? 'linear-gradient(90deg, #06d6a0, #0abf7e)' : 'linear-gradient(90deg, #6c63ff, #06d6a0)' }}`">
                                     </div>
                                 </div>
                             </div>
