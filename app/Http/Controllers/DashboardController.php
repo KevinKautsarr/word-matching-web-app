@@ -26,10 +26,9 @@ class DashboardController extends Controller
 
         // Hitung status lock/unlock dan progress tiap unit
         $units = $units->map(function (Unit $unit) use ($completedLessonIds) {
-            // Set status unlocked menggunakan method di model
             $unit->unlocked = $unit->isUnlockedFor($completedLessonIds);
 
-            // Hitung progress
+            // Calculate progress per unit
             $totalLessons = $unit->lessons->count();
             if ($totalLessons > 0) {
                 $unitLessonIds = $unit->lessons->pluck('id')->toArray();
@@ -42,6 +41,29 @@ class DashboardController extends Controller
             return $unit;
         });
 
-        return view('dashboard.index', compact('user', 'units'));
+        $hour = (int) now()->format('H');
+        if ($hour >= 5 && $hour < 11) $greeting = 'Selamat pagi';
+        elseif ($hour >= 11 && $hour < 15) $greeting = 'Selamat siang';
+        elseif ($hour >= 15 && $hour < 18) $greeting = 'Selamat sore';
+        else $greeting = 'Selamat malam';
+
+        $randomMsg = collect([
+            'Kamu luar biasa, lanjutkan!',
+            'Setiap langkah kecil membawamu lebih dekat ke tujuan.',
+            'Fokus dan konsistensi adalah kunci.',
+            'Terus belajar, jangan menyerah!',
+            'Lexora bangga dengan progresmu hari ini!'
+        ])->random();
+
+        // Daily Goal Logic
+        $lastPlayed = $user->last_played_at ? $user->last_played_at->startOfDay() : null;
+        $today = now()->startOfDay();
+        $dailyProgress = ($lastPlayed && $lastPlayed->eq($today)) ? ($user->daily_goal_progress ?? 0) : 0;
+        $goalTarget = 3; 
+        $goalPercent = min(100, ($dailyProgress / $goalTarget) * 100);
+
+        return view('dashboard.index', compact(
+            'user', 'units', 'greeting', 'randomMsg', 'dailyProgress', 'goalTarget', 'goalPercent'
+        ));
     }
 }

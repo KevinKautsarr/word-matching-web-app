@@ -10,14 +10,15 @@
 
     <style>
         :root {
-            --bg:         #0d0f1a;
-            --purple:     #6c63ff;
-            --green:      #06d6a0;
-            --gold:       #ffd166;
-            --red:        #ff6b6b;
-            --card:       #13162a;
-            --border:     rgba(108,99,255,0.18);
-            --text-muted: #8892b0;
+            --bg:         #0F1220;
+            --primary:    #4F7CFF;
+            --primary-light: #6AA8FF;
+            --green:      #06D6A0;
+            --gold:       #FFD166;
+            --red:        #FF6B6B;
+            --card:       rgba(255, 255, 255, 0.03);
+            --border:     rgba(255, 255, 255, 0.08);
+            --text-muted: #94A3B8;
         }
         .font-syne { font-family:'Syne',sans-serif; }
         .font-dm   { font-family:'DM Sans',sans-serif; }
@@ -45,16 +46,19 @@
         .result-card {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 1.75rem;
+            border-radius: 2rem;
             position: relative;
             overflow: hidden;
             max-width: 480px;
             width: 100%;
+            padding: 1.5rem;
+            backdrop-filter: blur(24px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
         }
         .result-card::before {
             content:'';
             position:absolute; inset:0;
-            background: radial-gradient(ellipse at 50% 0%, rgba(108,99,255,.1) 0%, transparent 65%);
+            background: radial-gradient(circle at 50% 0%, rgba(79, 124, 255, .15) 0%, transparent 65%);
             pointer-events:none;
         }
 
@@ -124,19 +128,21 @@
             opacity: .9;
         }
         .btn-retry {
-            background: rgba(108,99,255,.12);
-            border: 1px solid rgba(108,99,255,.3);
-            color: var(--purple);
+            background: rgba(79, 124, 255, .12);
+            border: 1px solid rgba(79, 124, 255, .3);
+            color: var(--primary);
         }
         .btn-next-success {
             background: linear-gradient(135deg, var(--green) 0%, #0abf7e 100%);
             border: none;
             color: #0d1a15;
+            box-shadow: 0 10px 20px rgba(6, 214, 160, 0.3);
         }
         .btn-next-unit {
-            background: linear-gradient(135deg, var(--purple) 0%, #8b85ff 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             border: none;
             color: #fff;
+            box-shadow: 0 10px 20px rgba(79, 124, 255, 0.3);
         }
 
         .divider {
@@ -158,12 +164,9 @@
         $timeVal      = $result['time_spent'] ?? 0;
         $xpEarned     = $result['xp_earned']  ?? 0;
         $accuracy     = $totalVal > 0 ? round(($correctVal / $totalVal) * 100) : 0;
-    @endphp
-
-    <div class="result-card fade-up">
+    @endphp    <div class="result-card fade-up">
         <div class="p-8">
 
-            {{-- ===== ICON + HEADLINE ===== --}}
             <div class="text-center mb-6">
                 <div class="icon-pop text-6xl mb-4 leading-none">
                     {{ $isCompleted ? '🎉' : '💪' }}
@@ -180,8 +183,50 @@
                 </p>
             </div>
 
-            {{-- ===== XP BADGE ===== --}}
-            <div class="text-center mb-6 fade-up delay-2">
+            @php
+                $target = $result['daily_target'];
+                $current = $result['daily_current'];
+                $wasCompletedNow = $result['completed'];
+                $prevCount = $wasCompletedNow ? max(0, $current - 1) : $current;
+                $prevPercent = ($prevCount / $target) * 100;
+                $currPercent = ($current / $target) * 100;
+            @endphp
+
+            <div class="mb-8 fade-up delay-2" 
+                 x-data="{ width: {{ $prevPercent }}, showCheck: false }" 
+                 x-init="setTimeout(() => { 
+                    width = {{ $currPercent }}; 
+                    if({{ $current }} >= {{ $target }}) { 
+                        setTimeout(() => { 
+                            showCheck = true;
+                            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                        }, 800);
+                    }
+                 }, 500)">
+                
+                <div class="flex justify-between items-end mb-2 px-1">
+                    <span class="font-syne font-bold text-xs uppercase tracking-wider text-[var(--text-muted)]">Target Harian</span>
+                    <span class="font-syne font-extrabold text-sm" 
+                          :class="width >= 100 ? 'text-[var(--green)]' : 'text-[var(--primary)]'">
+                        <span x-text="Math.round((width / 100) * {{ $target }})"></span> / {{ $target }}
+                    </span>
+                </div>
+
+                <div class="relative h-4 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-1">
+                    <div class="h-full rounded-full transition-all duration-[1000ms] ease-out shadow-[0_0_15px_rgba(79,124,255,0.3)]"
+                         :style="`width: ${width}%; background: ${width >= 100 ? 'linear-gradient(90deg, #06d6a0, #0abf7e)' : 'linear-gradient(90deg, var(--primary), var(--primary-light))'}`">
+                        <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                    </div>
+                </div>
+
+                <template x-if="showCheck">
+                    <p class="text-center text-[var(--green)] font-bold text-xs mt-2 animate-bounce">
+                        ✨ Target Hari Ini Tercapai! (+50 XP)
+                    </p>
+                </template>
+            </div>
+
+            <div class="text-center mb-8 fade-up delay-2">
                 @if($xpEarned > 0)
                     <div class="xp-badge">
                         ⚡ +{{ $xpEarned }} XP
@@ -193,34 +238,22 @@
                 @endif
             </div>
 
-            {{-- ===== STATS ===== --}}
-            <div class="flex gap-3 mb-2 fade-up delay-2">
-
-                {{-- Benar --}}
+            <div class="flex gap-4 mb-2 fade-up delay-2">
                 <div class="stat-box">
                     <div class="stat-value" style="color:var(--green);">
-                        {{ $correctVal }}<span style="font-size:.9rem; color:var(--text-muted);">/{{ $totalVal }}</span>
+                        {{ $correctVal }}<span style="font-size:1rem; color:var(--text-muted); opacity: 0.5;">/{{ $totalVal }}</span>
                     </div>
                     <div class="stat-label">Benar</div>
                 </div>
 
-                {{-- Skor --}}
                 <div class="stat-box">
-                    <div class="stat-value" style="color:var(--gold);">
-                        {{ number_format($scoreVal) }}
-                    </div>
-                    <div class="stat-label">Skor</div>
-                </div>
-
-                {{-- Waktu --}}
-                <div class="stat-box">
-                    <div class="stat-value" style="color:var(--purple);">
-                        {{ $timeVal }}<span style="font-size:.85rem; font-weight:600; color:var(--text-muted);">s</span>
+                    <div class="stat-value" style="color:var(--primary);">
+                        {{ $timeVal }}<span style="font-size:.9rem; font-weight:600; color:var(--text-muted); opacity: 0.5;">s</span>
                     </div>
                     <div class="stat-label">Waktu</div>
                 </div>
-
             </div>
+      </div>
 
             {{-- Accuracy bar --}}
             <div class="fade-up delay-3 mb-1 mt-4">

@@ -16,8 +16,15 @@ class GameController extends Controller
 {
     public function play(int $lesson_id)
     {
-        $lesson = Lesson::with('vocabularies')->findOrFail($lesson_id);
+        $lesson = Lesson::with(['vocabularies', 'unit'])->findOrFail($lesson_id);
         $user   = Auth::user();
+
+        // ── SECURITY CHECK: Apakah lesson ini sudah terbuka? ────────────────
+        $completedLessonIds = $user->progress()->completed()->pluck('lesson_id')->toArray();
+        if (!$lesson->unlockedFor($completedLessonIds)) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Ops! Kamu belum membuka lesson ini. Selesaikan lesson sebelumnya dulu ya.');
+        }
 
         if ($lesson->vocabularies->isEmpty()) {
             return redirect()->route('lessons.show', $lesson_id)
@@ -39,6 +46,12 @@ class GameController extends Controller
 
         $user = Auth::user();
         $lesson = Lesson::with('unit')->findOrFail($lessonId);
+
+        // ── SERVER-SIDE SECURITY CHECK: Validasi Lock/Unlock ────────────────
+        $completedLessonIds = $user->progress()->completed()->pluck('lesson_id')->toArray();
+        if (!$lesson->unlockedFor($completedLessonIds)) {
+            return response()->json(['error' => 'Aksi terlarang. Lesson terkunci.'], 403);
+        }
 
         $correct = (int) $request->correct;
         $total   = (int) $request->total;
@@ -63,58 +76,55 @@ class GameController extends Controller
             $wasCompleted = $progress->exists && $progress->is_completed;
 
             $progress->attempts = ($progress->attempts ?? 0) + 1;
-            // Pertahankan status completed jika sebelumnya sudah pernah selesai
             $progress->is_completed = $progress->is_completed || $isCompleted;
             $progress->score = max((int)$progress->score, $score);
             $progress->time_spent = 60;
             $progress->save();
 
-            // Daily Goal & Streak Logic
-            $today = Carbon::now()->startOfDay();
-            $lastPlayedDate = $user->last_played_at 
-                ? Carbon::parse($user->last_played_at)->startOfDay() 
-                : null;
+            // Streak & Daily Goal logic (Only if completed)
+            if ($isCompleted) {
+                $now = Carbon::now();
+                $today = $now->copy()->startOfDay();
+                $lastPlayedDate = $user->last_played_at 
+                    ? Carbon::parse($user->last_played_at)->startOfDay() 
+                    : null;
 
-            if (!$lastPlayedDate || $lastPlayedDate->ne($today)) {
-                $user->daily_goal_progress = 0; // Reset daily goal progress for new day
-            }
-            $user->daily_goal_progress += 1;
-
-            if ($user->daily_goal_progress === 3) {
-                $xpEarned += 50;
-                session()->flash('game_success', 'Kamu menyelesaikan target harian 3 lesson! Bonus +50 XP 🎉');
-            }
-
-            // Streak check
-            if ($lastPlayedDate && $lastPlayedDate->eq(now()->subDay()->startOfDay())) {
-                $user->streak += 1;
-                session()->flash('streak_up', true); // trigger animation in frontend
-                if ($user->streak % 7 === 0) {
-                    $xpEarned += 100;
-                    session()->flash('game_success', 'Streak ' . $user->streak . ' Hari! Bonus +100 XP 🔥');
+                if (!$lastPlayedDate || $lastPlayedDate->lt($today)) {
+                    $user->daily_goal_progress = 0; 
                 }
-            } elseif (!$lastPlayedDate || $lastPlayedDate->lt(now()->subDay()->startOfDay())) {
-                // Streak loss or first time
-                $user->streak = 1;
+                $user->daily_goal_progress += 1;
+
+                if ($user->daily_goal_progress === 3) {
+                    $xpEarned += 50;
+                    session()->flash('game_success', 'Target Harian Selesai! +50 XP 🎯');
+                }
+
+                if (!$lastPlayedDate) {
+                    $user->streak = 1;
+                } else {
+                    if ($lastPlayedDate->eq($today)) {
+                        // Already won today
+                    } elseif ($lastPlayedDate->eq($today->copy()->subDay())) {
+                        $user->streak += 1;
+                        session()->flash('streak_up', true);
+                        
+                        if ($user->streak % 7 === 0) {
+                            $xpEarned += 100;
+                            session()->flash('game_success', 'Streak ' . $user->streak . ' Hari! Bonus +100 XP 🔥');
+                        }
+                    } else {
+                        $user->streak = 1;
+                    }
+                }
+                $user->last_played_at = $now;
             }
 
-            $user->last_played_at = Carbon::now();
-
-            // Perfect Score Bonus
             if ($correct === $total && $total > 0) {
                 $xpEarned += 15;
                 session()->flash('game_success', 'Perfect! Bonus +15 XP 🎯');
             }
 
-            // Hanya berikan XP basik jika sekarang completed DAN belum pernah di-completed sebelumnya
-            // Namun bonus streak / daily goal / perfect score selalu diberikan
-            // Wait, to prevent farming, let's only give base XP if it was not completed previously.
-            // But perfect score bonus and daily goals should be given. We just update User's total XP.
-            if ($isCompleted && !$wasCompleted) {
-                // Base $xpEarned includes calculated (correct/total)*reward + bonuses.
-            } elseif ($wasCompleted) {
-                // If it was already completed, remove the base lesson reward from xpEarned, 
-                // keeping only perfect score and daily goal bonuses!
+            if ($wasCompleted) {
                 $baseReward = round(($correct / $total) * $lesson->xp_reward);
                 $xpEarned -= $baseReward; 
             }
@@ -135,12 +145,14 @@ class GameController extends Controller
 
         session([
             'game_result' => [
-                'score'      => $score,
-                'correct'    => $correct,
-                'total'      => $total,
-                'time_spent' => 60,
-                'xp_earned'  => $xpEarned,
-                'completed'  => $isCompleted
+                'score'         => $score,
+                'correct'       => $correct,
+                'total'         => $total,
+                'time_spent'    => 60,
+                'xp_earned'     => $xpEarned,
+                'completed'     => $isCompleted,
+                'daily_current' => $user->daily_goal_progress,
+                'daily_target'  => 3, // Target tetap harian
             ]
         ]);
 
@@ -149,12 +161,8 @@ class GameController extends Controller
             ->orderBy('order')
             ->first();
 
-        $redirectUrl = $nextLesson 
-            ? route('lessons.show', $nextLesson->id) 
-            : route('units.show', $lesson->unit_id);
-
         return response()->json([
-            'redirect' => $redirectUrl
+            'redirect' => route('game.result', $lessonId)
         ]);
     }
 
@@ -173,12 +181,14 @@ class GameController extends Controller
         $sessionData = session('game_result', []);
 
         $result = [
-            'score'      => $sessionData['score'] ?? 0,
-            'correct'    => $sessionData['correct'] ?? 0,
-            'total'      => $sessionData['total'] ?? 0,
-            'time_spent' => $sessionData['time_spent'] ?? 60,
-            'xp_earned'  => $sessionData['xp_earned'] ?? 0,
-            'completed'  => $sessionData['completed'] ?? false
+            'score'         => $sessionData['score']         ?? 0,
+            'correct'       => $sessionData['correct']       ?? 0,
+            'total'         => $sessionData['total']         ?? 0,
+            'time_spent'    => $sessionData['time_spent']    ?? 60,
+            'xp_earned'     => $sessionData['xp_earned']     ?? 0,
+            'completed'     => $sessionData['completed']     ?? false,
+            'daily_current' => $sessionData['daily_current'] ?? 0,
+            'daily_target'  => $sessionData['daily_target']  ?? 3
         ];
 
         return view('game.result', compact('user', 'lesson', 'progress', 'nextLesson', 'result'));
