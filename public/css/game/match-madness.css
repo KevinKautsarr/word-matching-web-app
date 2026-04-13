@@ -184,6 +184,9 @@
     font-family:'Syne',sans-serif; font-weight:800; font-size:4rem;
     color:white; text-transform:uppercase; letter-spacing:4px;
     margin-bottom:0.5rem; transform: scale(0.5); opacity:0;
+    text-align: center;
+    line-height: 1.1;
+    padding: 0 1rem;
 }
 .stage-overlay.active .stage-title {
     animation: stagePop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
@@ -282,42 +285,46 @@
     transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* ---------- MOBILE RESPONSIVE ---------- */
+/* ---------- MOBILE RESPONSIVE (md) ---------- */
 @media (max-width: 768px) {
     .hud-clean {
-        padding: 16px;
-        margin-bottom: 16px;
+        padding: 14px;
+        margin-bottom: 14px;
         border-radius: 20px;
     }
-    .hud-timer {
-        font-size: 1.6rem;
-    }
-    .hud-progress {
-        font-size: 1.1rem;
-    }
-    .stage-badge {
-        font-size: 10px;
-        padding: 4px 14px;
-    }
-    .game-grid {
-        gap: 10px;
-    }
-    .col-container {
-        gap: 10px;
-    }
-    .game-card {
-        min-height: 62px;
-        font-size: 0.95rem;
-        padding: 0.8rem;
-    }
-    .card-slot {
-        min-height: 66px;
-    }
-    .stage-title {
-        font-size: 2.2rem;
-    }
-    .stage-btn {
-        padding: 1rem 3rem;
-        font-size: 0.9rem;
-    }
+    .hud-timer    { font-size: 1.6rem; }
+    .hud-progress { font-size: 1.1rem; }
+    .stage-badge  { font-size: 10px; padding: 4px 14px; }
+    .game-grid    { gap: 10px; }
+    .col-container{ gap: 10px; }
+    .game-card    { min-height: 60px; font-size: 0.92rem; padding: 0.75rem; }
+    .card-slot    { min-height: 64px; }
+    .stage-title  { font-size: 2.2rem; }
+    .stage-btn    { padding: 1rem 3rem; font-size: 0.9rem; }
+}
+
+/* ---------- MOBILE RESPONSIVE (xs: HP kecil) ---------- */
+@media (max-width: 420px) {
+    .hud-timer    { font-size: 1.4rem; }
+    .hud-progress { font-size: 1rem; }
+    .hud-clean    { padding: 12px; }
+    .game-card    { min-height: 52px; font-size: 0.85rem; padding: 0.6rem; border-radius: 14px; }
+    .card-slot    { min-height: 56px; }
+    .game-grid    { gap: 8px; }
+    .col-container{ gap: 8px; }
+    .stage-title  { font-size: 1.8rem; letter-spacing: 2px; }
+    .stage-btn    { padding: 0.85rem 2rem; font-size: 0.85rem; }
+}
+
+/* ---------- GLOBAL FONT-STYLE FIX ---------- */
+* {
+    font-style: normal !important;
+}
+
+.font-syne, .font-dm,
+.game-card, .hud-timer, .hud-progress,
+.stage-badge, .stage-title, .stage-btn,
+.stat-value, .stat-label, .xp-badge,
+#submit-status, #stage-msg, #stage-sub {
+    font-style: normal !important;
 }

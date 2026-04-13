@@ -3,25 +3,11 @@
 @section('title', 'Hasil — ' . $lesson->title . ' — LEXORA')
 
 @section('content')
-<div class="min-h-screen flex items-center justify-center px-4 py-10"
-     style="background:#0d0f1a; font-family:'DM Sans',sans-serif;">
-
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<div class="min-h-screen flex items-center justify-center px-4 py-10">
 
     <style>
-        :root {
-            --bg:         #0F1220;
-            --primary:    #4F7CFF;
-            --primary-light: #6AA8FF;
-            --green:      #06D6A0;
-            --gold:       #FFD166;
-            --red:        #FF6B6B;
-            --card:       rgba(255, 255, 255, 0.03);
-            --border:     rgba(255, 255, 255, 0.08);
-            --text-muted: #94A3B8;
-        }
-        .font-syne { font-family:'Syne',sans-serif; }
-        .font-dm   { font-family:'DM Sans',sans-serif; }
+        /* ── Result page local vars ── */
+        .result-page { --gold:#FFD166; --green:#06D6A0; --red:#FF6B6B; }
 
         @keyframes fadeUp {
             from { opacity:0; transform:translateY(20px); }
@@ -32,10 +18,6 @@
             70%  { transform:scale(1.12); }
             100% { opacity:1; transform:scale(1); }
         }
-        @keyframes shimmer {
-            0%   { background-position:-400px 0; }
-            100% { background-position: 400px 0; }
-        }
 
         .fade-up  { animation:fadeUp .5s ease both; }
         .delay-1  { animation-delay:.1s; }
@@ -44,129 +26,130 @@
         .delay-4  { animation-delay:.4s; }
 
         .result-card {
-            background: var(--card);
-            border: 1px solid var(--border);
+            background: rgba(255,255,255,.03);
+            border: 1px solid rgba(255,255,255,.08);
             border-radius: 2rem;
             position: relative;
             overflow: hidden;
             max-width: 480px;
             width: 100%;
-            padding: 1.5rem;
             backdrop-filter: blur(24px);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 50px rgba(0,0,0,.35);
         }
         .result-card::before {
             content:'';
             position:absolute; inset:0;
-            background: radial-gradient(circle at 50% 0%, rgba(79, 124, 255, .15) 0%, transparent 65%);
+            background: radial-gradient(circle at 50% 0%, rgba(79,124,255,.15) 0%, transparent 65%);
             pointer-events:none;
         }
-
         .icon-pop {
             animation: popIn .55s cubic-bezier(.34,1.56,.64,1) both;
-            animation-delay: .05s;
+            animation-delay:.05s;
         }
-
         .stat-box {
             background: rgba(255,255,255,.03);
-            border: 1px solid var(--border);
-            border-radius: 1rem;
-            padding: 1rem .75rem;
-            text-align: center;
-            flex: 1;
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius:1rem;
+            padding:1rem .6rem;
+            text-align:center;
+            flex:1;
         }
         .stat-value {
             font-family:'Syne',sans-serif;
             font-weight:800;
-            font-size:1.4rem;
+            font-size:1.35rem;
             line-height:1;
+            font-style:normal;
         }
         .stat-label {
-            font-size:.68rem;
-            font-weight:600;
-            letter-spacing:.06em;
+            font-size:.65rem;
+            font-weight:700;
+            letter-spacing:.07em;
             text-transform:uppercase;
-            color:var(--text-muted);
-            margin-top:.35rem;
+            color:#94A3B8;
+            margin-top:.4rem;
+            font-style:normal;
         }
-
         .xp-badge {
             background: rgba(255,209,102,.1);
             border: 1px solid rgba(255,209,102,.25);
-            border-radius: 9999px;
-            padding: .5rem 1.4rem;
-            display: inline-flex;
-            align-items: center;
-            gap: .4rem;
+            border-radius:9999px;
+            padding:.45rem 1.4rem;
+            display:inline-flex;
+            align-items:center;
+            gap:.4rem;
             font-family:'Syne',sans-serif;
             font-weight:800;
-            font-size:1.1rem;
-            color: var(--gold);
+            font-size:1.05rem;
+            color:#FFD166;
+            font-style:normal;
         }
         .xp-badge.no-xp {
-            background: rgba(255,255,255,.04);
-            border-color: var(--border);
-            color: var(--text-muted);
-            font-size:.9rem;
+            background:rgba(255,255,255,.04);
+            border-color:rgba(255,255,255,.08);
+            color:#94A3B8;
+            font-size:.88rem;
         }
-
-        .btn-primary {
+        .btn-action {
             flex:1;
-            padding:.85rem 1rem;
+            padding:.82rem .8rem;
             border-radius:1rem;
             font-family:'Syne',sans-serif;
             font-weight:700;
-            font-size:.95rem;
+            font-size:.92rem;
             text-align:center;
-            transition: transform .2s, box-shadow .2s, opacity .2s;
             cursor:pointer;
             text-decoration:none;
             display:block;
+            font-style:normal;
+            transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
         }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            opacity: .9;
-        }
+        .btn-action:hover { transform:translateY(-2px); opacity:.9; }
         .btn-retry {
-            background: rgba(79, 124, 255, .12);
-            border: 1px solid rgba(79, 124, 255, .3);
-            color: var(--primary);
+            background:rgba(79,124,255,.12);
+            border:1px solid rgba(79,124,255,.3);
+            color:#4F7CFF;
         }
         .btn-next-success {
-            background: linear-gradient(135deg, var(--green) 0%, #0abf7e 100%);
-            border: none;
-            color: #0d1a15;
-            box-shadow: 0 10px 20px rgba(6, 214, 160, 0.3);
+            background:linear-gradient(135deg,#06D6A0 0%,#0abf7e 100%);
+            border:none; color:#0d1a15;
+            box-shadow:0 10px 20px rgba(6,214,160,.3);
         }
         .btn-next-unit {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-            border: none;
-            color: #fff;
-            box-shadow: 0 10px 20px rgba(79, 124, 255, 0.3);
+            background:linear-gradient(135deg,#4F7CFF 0%,#6AA8FF 100%);
+            border:none; color:#fff;
+            box-shadow:0 10px 20px rgba(79,124,255,.3);
         }
+        .divider { height:1px; background:rgba(255,255,255,.08); margin:1.5rem 0; }
 
-        .divider {
-            height:1px;
-            background: var(--border);
-            margin: 1.5rem 0;
+        /* ── Mobile ── */
+        @media (max-width:420px) {
+            .result-card { border-radius:1.5rem; }
+            .stat-value  { font-size:1.1rem; }
+            .btn-action  { font-size:.8rem; padding:.7rem .4rem; }
+            .xp-badge    { font-size:.95rem; }
         }
-
-        ::-webkit-scrollbar { width:6px; }
-        ::-webkit-scrollbar-track { background:#0d0f1a; }
-        ::-webkit-scrollbar-thumb { background:rgba(108,99,255,.4); border-radius:9999px; }
     </style>
 
     @php
-        $isCompleted  = $result['completed'];
-        $scoreVal     = $result['score']      ?? 0;
-        $correctVal   = $result['correct']    ?? 0;
-        $totalVal     = $result['total']      ?? 0;
-        $timeVal      = $result['time_spent'] ?? 0;
-        $xpEarned     = $result['xp_earned']  ?? 0;
-        $accuracy     = $totalVal > 0 ? round(($correctVal / $totalVal) * 100) : 0;
-    @endphp    <div class="result-card fade-up">
-        <div class="p-8">
+        $isCompleted = $result['completed'];
+        $correctVal  = $result['correct']    ?? 0;
+        $totalVal    = $result['total']      ?? 0;
+        $timeVal     = $result['time_spent'] ?? 0;
+        $xpEarned    = $result['xp_earned']  ?? 0;
+        $accuracy    = $totalVal > 0 ? round(($correctVal / $totalVal) * 100) : 0;
 
+        $target      = $result['daily_target']  ?? 3;
+        $current     = $result['daily_current'] ?? 0;
+        $prevCount   = $isCompleted ? max(0, $current - 1) : $current;
+        $prevPercent = $target > 0 ? min(100, ($prevCount / $target) * 100) : 0;
+        $currPercent = $target > 0 ? min(100, ($current / $target) * 100) : 0;
+    @endphp
+
+    <div class="result-card fade-up result-page">
+        <div class="p-6 md:p-8">
+
+            {{-- Header --}}
             <div class="text-center mb-6">
                 <div class="icon-pop text-6xl mb-4 leading-none">
                     {{ $isCompleted ? '🎉' : '💪' }}
@@ -174,7 +157,7 @@
                 <h1 class="font-syne font-extrabold text-white text-2xl mb-1 fade-up delay-1">
                     {{ $isCompleted ? 'Lesson Selesai!' : 'Hampir Berhasil!' }}
                 </h1>
-                <p class="font-dm text-sm fade-up delay-1" style="color:var(--text-muted);">
+                <p class="font-dm text-sm fade-up delay-1" style="color:#94A3B8;">
                     @if($isCompleted)
                         Kamu berhasil menyelesaikan <strong class="text-white">{{ $lesson->title }}</strong>
                     @else
@@ -183,121 +166,103 @@
                 </p>
             </div>
 
-            @php
-                $target = $result['daily_target'];
-                $current = $result['daily_current'];
-                $wasCompletedNow = $result['completed'];
-                $prevCount = $wasCompletedNow ? max(0, $current - 1) : $current;
-                $prevPercent = ($prevCount / $target) * 100;
-                $currPercent = ($current / $target) * 100;
-            @endphp
-
-            <div class="mb-8 fade-up delay-2" 
-                 x-data="{ width: {{ $prevPercent }}, showCheck: false }" 
-                 x-init="setTimeout(() => { 
-                    width = {{ $currPercent }}; 
-                    if({{ $current }} >= {{ $target }}) { 
-                        setTimeout(() => { 
-                            showCheck = true;
-                            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-                        }, 800);
-                    }
+            {{-- Daily Target --}}
+            <div class="mb-6 fade-up delay-2"
+                 x-data="{ width: {{ $prevPercent }}, showCheck: false }"
+                 x-init="setTimeout(() => {
+                     width = {{ $currPercent }};
+                     if({{ $current }} >= {{ $target }}) {
+                         setTimeout(() => {
+                             showCheck = true;
+                             confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                         }, 800);
+                     }
                  }, 500)">
-                
-                <div class="flex justify-between items-end mb-2 px-1">
-                    <span class="font-syne font-bold text-xs uppercase tracking-wider text-[var(--text-muted)]">Target Harian</span>
-                    <span class="font-syne font-extrabold text-sm" 
-                          :class="width >= 100 ? 'text-[var(--green)]' : 'text-[var(--primary)]'">
-                        <span x-text="Math.round((width / 100) * {{ $target }})"></span> / {{ $target }}
+
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <span class="font-syne font-bold text-xs uppercase tracking-wider" style="color:#94A3B8;">Target Harian</span>
+                    <span class="font-syne font-extrabold text-sm"
+                          :class="width >= 100 ? 'text-green-400' : 'text-blue-400'">
+                        <span x-text="Math.min(Math.round((width / 100) * {{ $target }}), {{ $target }})"></span> / {{ $target }}
                     </span>
                 </div>
 
-                <div class="relative h-4 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-1">
-                    <div class="h-full rounded-full transition-all duration-[1000ms] ease-out shadow-[0_0_15px_rgba(79,124,255,0.3)]"
-                         :style="`width: ${width}%; background: ${width >= 100 ? 'linear-gradient(90deg, #06d6a0, #0abf7e)' : 'linear-gradient(90deg, var(--primary), var(--primary-light))'}`">
-                        <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                <div class="relative h-3 w-full rounded-full overflow-hidden" style="background:rgba(255,255,255,.05);">
+                    <div class="h-full rounded-full transition-all duration-[1000ms] ease-out"
+                         :style="`width: ${width}%; background: ${width >= 100 ? 'linear-gradient(90deg,#06d6a0,#0abf7e)' : 'linear-gradient(90deg,#4F7CFF,#6AA8FF)'}`">
                     </div>
                 </div>
 
                 <template x-if="showCheck">
-                    <p class="text-center text-[var(--green)] font-bold text-xs mt-2 animate-bounce">
+                    <p class="text-center font-bold text-xs mt-2 animate-bounce" style="color:#06D6A0;">
                         ✨ Target Hari Ini Tercapai! (+50 XP)
                     </p>
                 </template>
             </div>
 
-            <div class="text-center mb-8 fade-up delay-2">
+            {{-- XP Badge --}}
+            <div class="text-center mb-6 fade-up delay-2">
                 @if($xpEarned > 0)
-                    <div class="xp-badge">
-                        ⚡ +{{ $xpEarned }} XP
-                    </div>
+                    <div class="xp-badge">⚡ +{{ $xpEarned }} XP</div>
                 @else
-                    <div class="xp-badge no-xp">
-                        XP sudah pernah diraih sebelumnya
-                    </div>
+                    <div class="xp-badge no-xp">XP sudah pernah diraih sebelumnya</div>
                 @endif
             </div>
 
-            <div class="flex gap-4 mb-2 fade-up delay-2">
+            {{-- Stats: 3 kolom --}}
+            <div class="flex gap-3 mb-4 fade-up delay-2">
                 <div class="stat-box">
-                    <div class="stat-value" style="color:var(--green);">
-                        {{ $correctVal }}<span style="font-size:1rem; color:var(--text-muted); opacity: 0.5;">/{{ $totalVal }}</span>
+                    <div class="stat-value" style="color:#06D6A0;">
+                        {{ $correctVal }}<span style="font-size:.9rem;color:#94A3B8;opacity:.6;">/{{ $totalVal }}</span>
                     </div>
                     <div class="stat-label">Benar</div>
                 </div>
-
                 <div class="stat-box">
-                    <div class="stat-value" style="color:var(--primary);">
-                        {{ $timeVal }}<span style="font-size:.9rem; font-weight:600; color:var(--text-muted); opacity: 0.5;">s</span>
+                    <div class="stat-value" style="color:#4F7CFF;">
+                        {{ $timeVal }}<span style="font-size:.85rem;font-weight:600;color:#94A3B8;opacity:.6;">s</span>
                     </div>
                     <div class="stat-label">Waktu</div>
                 </div>
-            </div>
-      </div>
-
-            {{-- Accuracy bar --}}
-            <div class="fade-up delay-3 mb-1 mt-4">
-                <div class="flex justify-between text-xs font-dm mb-1" style="color:var(--text-muted);">
-                    <span>Akurasi</span>
-                    <span style="color:{{ $accuracy >= 70 ? 'var(--green)' : 'var(--red)' }}">{{ $accuracy }}%</span>
+                <div class="stat-box">
+                    <div class="stat-value" style="color:{{ $accuracy >= 70 ? '#06D6A0' : '#FF6B6B' }};">
+                        {{ $accuracy }}<span style="font-size:.85rem;font-weight:600;color:#94A3B8;opacity:.6;">%</span>
+                    </div>
+                    <div class="stat-label">Akurasi</div>
                 </div>
-                <div class="rounded-full overflow-hidden" style="height:6px; background:rgba(255,255,255,.07);">
-                    <div class="rounded-full transition-all duration-700"
-                         style="width:{{ $accuracy }}%; height:100%;
-                                background:{{ $accuracy >= 70
-                                    ? 'linear-gradient(90deg,#06d6a0,#0abf7e)'
-                                    : 'linear-gradient(90deg,#ff6b6b,#ff9999)' }};">
+            </div>
+
+            {{-- Accuracy Bar --}}
+            <div class="fade-up delay-3 mb-1">
+                <div class="rounded-full overflow-hidden" style="height:5px;background:rgba(255,255,255,.06);">
+                    <div class="rounded-full" style="width:{{ $accuracy }}%;height:100%;
+                        background:{{ $accuracy >= 70
+                            ? 'linear-gradient(90deg,#06d6a0,#0abf7e)'
+                            : 'linear-gradient(90deg,#ff6b6b,#ff9999)' }};
+                        transition:width .8s ease;">
                     </div>
                 </div>
             </div>
 
             <div class="divider"></div>
 
-            {{-- ===== ACTION BUTTONS ===== --}}
+            {{-- Buttons --}}
             <div class="flex gap-3 fade-up delay-4">
-
-                {{-- Ulangi --}}
-                <a href="{{ route('game.play', $lesson->id) }}" class="btn-primary btn-retry">
+                <a href="{{ route('game.play', $lesson->id) }}" class="btn-action btn-retry">
                     🔄 Ulangi
                 </a>
-
-                {{-- Lanjut --}}
                 @if($nextLesson)
-                    <a href="{{ route('lessons.show', $nextLesson->id) }}"
-                       class="btn-primary btn-next-success">
+                    <a href="{{ route('lessons.show', $nextLesson->id) }}" class="btn-action btn-next-success">
                         Lanjut →
                     </a>
                 @else
-                    <a href="{{ route('units.show', $lesson->unit_id) }}"
-                       class="btn-primary btn-next-unit">
+                    <a href="{{ route('units.show', $lesson->unit_id) }}" class="btn-action btn-next-unit">
                         ← Ke Unit
                     </a>
                 @endif
-
             </div>
 
-            {{-- Lesson info footer --}}
-            <p class="text-center text-xs font-dm mt-5" style="color:var(--text-muted);">
+            {{-- Footer Info --}}
+            <p class="text-center text-xs font-dm mt-5" style="color:#94A3B8;">
                 {{ $lesson->unit->title ?? '' }}
                 @if($lesson->unit->title ?? false) · @endif
                 {{ $lesson->title }}

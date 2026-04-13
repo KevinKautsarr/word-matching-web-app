@@ -148,12 +148,18 @@
             colRight.innerHTML = '';
 
             let basePool = shuffle(config.allVocab);
-            let combinedPool = [...basePool, ...basePool];
-            if (combinedPool.length < 10) {
-                combinedPool = [...combinedPool, ...combinedPool, ...combinedPool];
-            }
             
-            queue = shuffle(combinedPool).slice(0, 10); 
+            // Pastikan kita mengambil tepat 10 kata unik jika ada, tanpa duplikat
+            if (basePool.length >= 10) {
+                queue = basePool.slice(0, 10);
+            } else {
+                // Jika kurang dari 10 kata, baru kita duplikat agar pas 10
+                queue = [...basePool];
+                while(queue.length < 10) {
+                    queue.push(basePool[Math.floor(Math.random() * basePool.length)]);
+                }
+                queue = shuffle(queue);
+            }
             totalPairsInStage = queue.length;
             totalPairsToAttempt += totalPairsInStage;
             updateProgressBar();
@@ -216,11 +222,8 @@
             document.getElementById('stage-start-btn').textContent = "Mulai Stage " + nextStageToStart;
             document.getElementById('stage-overlay').classList.add('active');
         } else {
-            document.getElementById('stage-msg').textContent = "LESSON COMPLETE 🎉";
-            document.getElementById('stage-sub').textContent = "Semua stage berhasil diselesaikan!";
-            document.getElementById('stage-start-btn').style.display = "none";
-            document.getElementById('stage-overlay').classList.add('active');
-            setTimeout(submitGame, 1500);
+            // Langsung simpan dan pindah ke halaman Result (yang ke-2)
+            submitGame();
         }
     }
 
@@ -286,13 +289,16 @@
             playSound('wrong'); 
             a.classList.add('wrong'); 
             b.classList.add('wrong');
+            // Reset state langsung agar klik berikutnya tidak terganggu state lama
+            selectedLeft  = null;
+            selectedRight = null;
             const wA = a, wB = b;
             setTimeout(() => { 
                 wA.classList.remove('wrong', 'selected'); 
                 wB.classList.remove('wrong', 'selected'); 
             }, 400);
-            selectedRight = null;
         }
+
     }
 
     function fillEmptySlotsCarefully() {
@@ -317,7 +323,7 @@
         submitted = true;
         clearInterval(timerInterval);
         document.getElementById('submit-overlay').classList.add('active');
-        document.getElementById('submit-status').textContent = "Lesson Completed! 🎉";
+        document.getElementById('submit-status').textContent = "Menyimpan hasil...";
         const timeSpent = Math.round((Date.now() - startTime) / 1000);
         
         fetch(config.submitUrl, {

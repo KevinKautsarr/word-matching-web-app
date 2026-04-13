@@ -83,4 +83,38 @@ class Lesson extends Model
     {
         return $query->orderBy('order');
     }
+
+    // =====================
+    // HELPERS
+    // =====================
+
+    /**
+     * Cek apakah lesson ini sudah terbuka untuk user berdasarkan
+     * array lesson_id yang sudah diselesaikan.
+     *
+     * Aturan:
+     * - Jika is_locked = false  → selalu terbuka
+     * - Lesson pertama (order=1 atau tidak ada lesson sebelumnya) → terbuka
+     * - Lesson sebelumnya (order-1) sudah ada di $completedLessonIds → terbuka
+     */
+    public function unlockedFor(array $completedLessonIds): bool
+    {
+        // Tidak di-lock sama sekali
+        if (!$this->is_locked) {
+            return true;
+        }
+
+        // Cari lesson sebelumnya dalam unit yang sama
+        $previousLesson = static::where('unit_id', $this->unit_id)
+            ->where('order', $this->order - 1)
+            ->first();
+
+        // Tidak ada lesson sebelumnya → ini lesson pertama, terbuka
+        if (!$previousLesson) {
+            return true;
+        }
+
+        // Lesson sebelumnya sudah selesai
+        return in_array($previousLesson->id, $completedLessonIds);
+    }
 }

@@ -9,9 +9,9 @@
     <div class="card-glow"></div>
 
     @if($isUnlocked)
-        <a href="{{ route('lessons.show', $lesson->id) }}" class="flex items-center gap-4 p-5 no-underline">
+        <a href="{{ route('lessons.show', $lesson->id) }}" class="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 no-underline">
     @else
-        <div class="flex items-center gap-4 p-5">
+        <div class="flex items-center gap-3 sm:gap-4 p-4 sm:p-5">
     @endif
 
         {{-- Number / status bubble --}}
@@ -44,9 +44,9 @@
         </div>
 
         {{-- Right side info --}}
-        <div class="flex items-center gap-3 flex-shrink-0">
+        <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             @if(isset($lesson->xp_reward) && $lesson->xp_reward > 0)
-            <span class="badge" style="background:rgba(255,209,102,.1); color:var(--gold);">
+            <span class="badge hidden sm:inline-block" style="background:rgba(255,209,102,.1); color:var(--gold);">
                 +{{ $lesson->xp_reward }} XP
             </span>
             @endif

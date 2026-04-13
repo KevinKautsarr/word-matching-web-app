@@ -10,7 +10,7 @@
     <!-- Google Fonts: Syne + DM Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
     
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -64,10 +64,11 @@
             --red: #FF6363;
         }
 
-        * { transition: all 0.18s ease-out; }
+        * { transition: all 0.18s ease-out; font-style: normal; }
 
         body { 
             font-family: 'DM Sans', sans-serif; 
+            font-style: normal;
             background: radial-gradient(circle at center, rgba(15,18,32,0) 50%, rgba(15,18,32,0.8) 100%), #0f1220;
             color: var(--text); 
             position: relative;
@@ -139,7 +140,7 @@
 
     @stack('styles')
 </head>
-<body class="min-h-screen text-themeText font-dm flex bg-[var(--bg)] pb-20 md:pb-0">
+<body class="min-h-screen text-themeText font-dm flex bg-[var(--bg)] pb-20 md:pb-0" style="overflow-x:hidden;">
 
     {{-- SIDEBAR --}}
     <div class="hidden md:block">
