@@ -37,22 +37,6 @@
             <span class="text-xl menu-icon">🎯</span>
             <span>Practice</span>
         </a>
-        <a href="#" class="sidebar-item">
-            <span class="text-xl menu-icon">📁</span>
-            <span>Projects</span>
-        </a>
-        <a href="#" class="sidebar-item">
-            <span class="text-xl menu-icon">🏆</span>
-            <span>Goals</span>
-        </a>
-        <a href="#" class="sidebar-item">
-            <span class="text-xl menu-icon">👑</span>
-            <span>Leaderboard</span>
-        </a>
-        <a href="#" class="sidebar-item">
-            <span class="text-xl menu-icon">🏪</span>
-            <span>Store</span>
-        </a>
     </div>
 
     {{-- Bottom Area --}}

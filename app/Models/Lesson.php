@@ -59,7 +59,7 @@ class Lesson extends Model
     /**
      * Satu lesson memiliki banyak progress dari berbagai user.
      */
-    public function userProgress(): HasMany
+    public function progress(): HasMany
     {
         return $this->hasMany(UserProgress::class);
     }

@@ -77,8 +77,6 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        $this->updateStreak(Auth::user());
-
         return redirect()->intended(route('dashboard'))
             ->with('success', 'Selamat datang kembali, ' . Auth::user()->name . '!');
     }
@@ -99,38 +97,5 @@ class AuthController extends Controller
 
         return redirect()->route('login')
             ->with('success', 'Kamu berhasil logout.');
-    }
-
-    // =====================================================================
-    // PRIVATE HELPERS
-    // =====================================================================
-
-    /**
-     * Perbarui streak login harian user.
-     * - Jika terakhir aktif adalah kemarin → streak +1
-     * - Jika terakhir aktif adalah hari ini → streak tetap
-     * - Selain itu → reset streak ke 1
-     */
-    private function updateStreak(User $user): void
-    {
-        $today     = Carbon::today();
-        $lastActive = $user->last_active_at ? Carbon::parse($user->last_active_at)->startOfDay() : null;
-
-        if ($lastActive === null) {
-            // Login pertama kali
-            $user->streak = 1;
-        } elseif ($lastActive->eq($today)) {
-            // Sudah login hari ini, tidak perlu update
-            return;
-        } elseif ($lastActive->eq($today->copy()->subDay())) {
-            // Login kemarin → lanjutkan streak
-            $user->streak += 1;
-        } else {
-            // Lewat lebih dari 1 hari → reset
-            $user->streak = 1;
-        }
-
-        $user->last_active_at = Carbon::now();
-        $user->save();
     }
 }

@@ -161,17 +161,13 @@
              class="fixed bottom-[74px] left-4 right-4 z-50 bg-[#121530]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
             
             <div class="grid grid-cols-2 gap-4">
-                <a href="#" class="flex items-center gap-3 p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-                    <span class="text-xl">📁</span>
-                    <span class="text-sm font-bold">Projects</span>
-                </a>
-                <a href="#" class="flex items-center gap-3 p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-                    <span class="text-xl">🏆</span>
-                    <span class="text-sm font-bold">Goals</span>
+                <a href="{{ route('profile.index') }}" class="flex items-center gap-3 p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors">
+                    <span class="text-xl">👤</span>
+                    <span class="text-sm font-bold">Profile Settings</span>
                 </a>
                 <a href="#" class="flex items-center gap-3 p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors">
                     <span class="text-xl">⚙️</span>
-                    <span class="text-sm font-bold">Settings</span>
+                    <span class="text-sm font-bold">Preferences</span>
                 </a>
                 <form method="POST" action="{{ route('logout') }}" class="m-0">
                     @csrf
@@ -197,10 +193,7 @@
                 <span class="text-xl">🎯</span>
                 <span class="text-[10px] font-bold uppercase tracking-tighter">Practice</span>
             </a>
-            <a href="#" class="flex flex-col items-center gap-1 p-2 text-[var(--text-muted)]">
-                <span class="text-xl">👑</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">League</span>
-            </a>
+
             <a href="{{ route('profile.index') }}" class="flex flex-col items-center gap-1 p-2 {{ request()->routeIs('profile.*') ? 'text-[var(--primary)]' : 'text-[var(--text-muted)]' }}">
                 <span class="text-xl">👤</span>
                 <span class="text-[10px] font-bold uppercase tracking-tighter">Profile</span>
@@ -213,10 +206,49 @@
     </nav>
 
     <div class="flex-1 md:ml-[240px] flex flex-col min-h-screen relative">
-        <x-topbar />
+
         <x-flash-messages />
 
-        <main class="main-container w-full max-w-[1100px] mx-auto p-5 md:p-8 page-transition pt-4 md:pt-6 pb-24 md:pb-12">
+        <main class="main-container w-full max-w-[1100px] mx-auto p-5 md:p-8 page-transition pt-8 md:pt-10 pb-24 md:pb-12">
+            @auth
+            {{-- USER STATUS STRIP --}}
+            <div class="flex flex-wrap items-center justify-center gap-4 md:gap-8 px-5 py-4 mb-8 rounded-2xl bg-white/[0.02] border border-white/[0.05] shadow-sm animate-in">
+                {{-- Streak --}}
+                <div class="flex items-center gap-3 pr-4 md:pr-8 border-r border-white/5 last:border-0 h-10">
+                    <div class="w-10 h-10 rounded-xl bg-[#FFD166]/10 flex items-center justify-center text-xl">🔥</div>
+                    <div class="text-left">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-0.5">Streak</p>
+                        <p class="font-syne font-black text-sm text-[#FFD166] leading-none">{{ auth()->user()->streak ?? 0 }} Hari</p>
+                    </div>
+                </div>
+                {{-- XP --}}
+                <div class="flex items-center gap-3 pr-4 md:pr-8 border-r border-white/5 last:border-0 h-10">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center text-xl">⚡</div>
+                    <div class="text-left">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-0.5">Total XP</p>
+                        <p class="font-syne font-black text-sm text-[var(--primary)] leading-none">{{ number_format(auth()->user()->xp ?? 0) }}</p>
+                    </div>
+                </div>
+                {{-- Level --}}
+                <div class="flex items-center gap-3 pr-4 md:pr-8 border-r border-white/5 last:border-0 h-10">
+                    <div class="w-10 h-10 rounded-xl bg-[#06D6A0]/10 flex items-center justify-center text-xl">⭐</div>
+                    <div class="text-left">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-0.5">Level</p>
+                        <p class="font-syne font-black text-sm text-[#06D6A0] leading-none">{{ auth()->user()->level ?? 1 }}</p>
+                    </div>
+                </div>
+                {{-- Goal (Optional) --}}
+                @if(isset($dailyProgress) && isset($goalTarget))
+                <div class="flex items-center gap-3 h-10">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--secondary)]/10 flex items-center justify-center text-xl">🎯</div>
+                    <div class="text-left">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-0.5">Target Hari Ini</p>
+                        <p class="font-syne font-black text-sm text-[var(--secondary)] leading-none">{{ $dailyProgress }} / {{ $goalTarget }}</p>
+                    </div>
+                </div>
+                @endif
+            </div>
+            @endauth
             @hasSection('nav_header')
                 <header class="flex items-center justify-between mb-8 pb-3 border-b border-[var(--border)]">
                     <a href="javascript:history.back()" class="flex items-center gap-2 text-sm font-semibold tracking-wide text-[var(--text-muted)] hover:text-white transition-colors group px-3 py-1.5 rounded-lg hover:bg-[rgba(255,255,255,0.05)]">

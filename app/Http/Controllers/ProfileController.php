@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateProfileRequest;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -31,29 +30,14 @@ class ProfileController extends Controller
         return view('profile.index', compact('user', 'xpLogs', 'stats'));
     }
 
-    /**
-     * Proses update data profil user.
-     */
-    public function update(Request $request): RedirectResponse
+    public function update(UpdateProfileRequest $request): RedirectResponse
     {
         $user = Auth::user();
 
-        $validated = $request->validate([
-            'name'                  => ['required', 'string', 'max:255'],
-            'email'                 => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'current_password'      => ['nullable', 'string'],
-            'password'              => ['nullable', 'string', 'min:8', 'confirmed'],
-        ]);
+        $validated = $request->validated();
 
-        // Jika user ingin ganti password
-        if (filled($request->password)) {
-            if (! Hash::check($request->current_password, $user->password)) {
-                return back()->withErrors([
-                    'current_password' => 'Password saat ini tidak sesuai.',
-                ]);
-            }
-
-            $user->password = Hash::make($request->password);
+        if ($request->filled('password')) {
+            $user->password = Hash::make($validated['password']);
         }
 
         $user->name  = $validated['name'];
@@ -81,7 +65,7 @@ class ProfileController extends Controller
         $totalAttempts  = $user->progress()->sum('attempts');
 
         $wordsLearned = \App\Models\Vocabulary::whereHas('lesson.progress', function($q) use ($user) {
-            $q->where('user_id', $user->id)->where('is_completed', true);
+            $q->where('user_id', (int) $user->id)->where('is_completed', true);
         })->count();
 
         // Hitung XP yang dibutuhkan untuk level berikutnya
@@ -91,13 +75,13 @@ class ProfileController extends Controller
         $xpToNextLevel  = $xpPerLevel - ($user->xp % $xpPerLevel);
 
         return [
-            'total_completed' => $totalCompleted,
-            'total_xp_earned' => $totalXpEarned,
-            'total_attempts'  => $totalAttempts,
-            'xp_progress'     => $xpProgress,
-            'xp_to_next_level'=> $xpToNextLevel,
+            'total_completed' => (int) ($totalCompleted ?? 0),
+            'total_xp_earned' => (int) ($totalXpEarned ?? 0),
+            'total_attempts'  => (int) ($totalAttempts ?? 0),
+            'xp_progress'     => (int) ($xpProgress ?? 0),
+            'xp_to_next_level'=> (int) ($xpToNextLevel ?? 100),
             'xp_percent'      => min(100, (int) round(($user->xp % $xpPerLevel) / $xpPerLevel * 100)),
-            'words_learned'   => $wordsLearned,
+            'words_learned'   => (int) ($wordsLearned ?? 0),
         ];
     }
 }

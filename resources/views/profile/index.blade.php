@@ -3,153 +3,109 @@
 @section('title', 'Profil — LEXORA')
 
 @section('content')
-<div class="min-h-screen" style="background:#0d0f1a; font-family:'DM Sans',sans-serif;">
-
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<div class="min-h-screen font-dm">
 
     <style>
-        :root {
-            --bg:         #0d0f1a;
-            --purple:     #6c63ff;
-            --green:      #06d6a0;
-            --gold:       #ffd166;
-            --card:       #13162a;
-            --border:     rgba(108,99,255,0.18);
-            --text-muted: #8892b0;
+        .profile-card { 
+            background: var(--card); 
+            border: 1px solid var(--border); 
+            border-radius: 1.5rem; 
+            backdrop-filter: blur(20px); 
+            position: relative; 
+            overflow: hidden; 
         }
-        .font-syne { font-family:'Syne',sans-serif; }
-        .font-dm   { font-family:'DM Sans',sans-serif; }
-
-        @keyframes fadeUp {
-            from { opacity:0; transform:translateY(16px); }
-            to   { opacity:1; transform:translateY(0); }
+        .profile-card::before { 
+            content:''; position:absolute; inset:0; 
+            background: radial-gradient(ellipse at 0% 0%, rgba(79, 124, 255, .08) 0%, transparent 60%); 
+            pointer-events:none; 
         }
-        .fade-up { animation:fadeUp .45s ease both; }
-        .delay-1 { animation-delay:.07s; }
-        .delay-2 { animation-delay:.14s; }
-        .delay-3 { animation-delay:.21s; }
-        .delay-4 { animation-delay:.28s; }
 
-        .card {
-            background: var(--card);
+        .stat-box {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border);
             border-radius: 1.25rem;
+            padding: 1.25rem 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .stat-box:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-2px);
+            border-color: rgba(79, 124, 255, 0.3);
         }
 
-        /* avatar */
-        .avatar {
-            width:5rem; height:5rem;
-            border-radius:9999px;
-            display:flex; align-items:center; justify-content:center;
-            font-family:'Syne',sans-serif;
-            font-weight:800; font-size:1.75rem;
-            color:#fff;
-            background: linear-gradient(135deg, var(--purple) 0%, #9b94ff 100%);
-            flex-shrink:0;
+        .avatar-circle {
+            width: 5rem; height: 5rem;
+            border-radius: 9999px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Syne', sans-serif;
+            font-weight: 800; font-size: 1.75rem;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            box-shadow: 0 0 20px rgba(79, 124, 255, 0.3);
+            flex-shrink: 0;
         }
 
-        /* stat box */
-        .stat-box {
-            flex:1;
-            background: rgba(255,255,255,.03);
+        .xp-bar-container { height: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 9999px; overflow: hidden; }
+        .xp-bar-fill {
+            height: 100%; border-radius: 9999px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            box-shadow: 0 0 12px rgba(79, 124, 255, 0.4);
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .form-input-custom {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border);
-            border-radius:1rem;
-            padding:1rem .75rem;
-            text-align:center;
+            border-radius: 1rem;
+            padding: 0.8rem 1.1rem;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s;
         }
-        .stat-value {
-            font-family:'Syne',sans-serif;
-            font-weight:800;
-            font-size:1.45rem;
-            line-height:1;
+        .form-input-custom:focus {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 124, 255, 0.1);
         }
-        .stat-label {
-            font-size:.67rem;
-            font-weight:600;
-            letter-spacing:.06em;
-            text-transform:uppercase;
-            color:var(--text-muted);
-            margin-top:.35rem;
+        .form-input-custom.is-error { border-color: var(--red); }
+
+        .form-label-custom {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            margin-left: 0.25rem;
         }
 
-        /* xp bar */
-        @keyframes shimmer {
-            0%   { background-position:-400px 0; }
-            100% { background-position: 400px 0; }
+        .log-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1rem; border-radius: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid transparent;
+            transition: all 0.2s;
         }
-        .xp-fill {
-            background: linear-gradient(90deg, var(--purple) 0%, var(--green) 50%, var(--purple) 100%);
-            background-size:400px 100%;
-            animation:shimmer 2.5s linear infinite;
-            height:100%; border-radius:9999px;
-            transition: width 1s cubic-bezier(.4,0,.2,1);
-        }
-
-        /* form inputs */
-        .form-input {
-            width:100%;
-            background: rgba(255,255,255,.04);
-            border: 1px solid var(--border);
-            border-radius:.75rem;
-            padding:.7rem 1rem;
-            color:#fff;
-            font-family:'DM Sans',sans-serif;
-            font-size:.9rem;
-            outline:none;
-            transition: border-color .2s, box-shadow .2s;
-        }
-        .form-input::placeholder { color:var(--text-muted); }
-        .form-input:focus {
-            border-color: var(--purple);
-            box-shadow: 0 0 0 3px rgba(108,99,255,.18);
-        }
-        .form-input.is-error { border-color:#ff6b6b; }
-
-        .form-label {
-            display:block;
-            font-family:'DM Sans',sans-serif;
-            font-size:.8rem;
-            font-weight:500;
-            color:var(--text-muted);
-            margin-bottom:.4rem;
+        .log-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: var(--border);
         }
 
-        /* log row */
-        .log-row {
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:1rem;
-            padding:.875rem 0;
-            border-bottom:1px solid rgba(255,255,255,.04);
+        .btn-update {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 1.25rem;
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            box-shadow: 0 8px 20px rgba(79, 124, 255, 0.25);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .log-row:last-child { border-bottom:none; }
-
-        /* badge */
-        .badge {
-            font-family:'Syne',sans-serif;
-            font-size:.68rem; font-weight:700;
-            letter-spacing:.05em; text-transform:uppercase;
-            padding:.2rem .65rem; border-radius:9999px;
-        }
-
-        /* submit btn */
-        .btn-save {
-            width:100%;
-            padding:.85rem;
-            border-radius:1rem;
-            font-family:'Syne',sans-serif;
-            font-weight:700; font-size:.95rem;
-            color:#fff;
-            background: linear-gradient(135deg, var(--purple) 0%, #8b85ff 100%);
-            border:none; cursor:pointer;
-            transition: transform .2s, opacity .2s;
-        }
-        .btn-save:hover { transform:translateY(-2px); opacity:.9; }
-
-        ::-webkit-scrollbar { width:6px; }
-        ::-webkit-scrollbar-track { background:#0d0f1a; }
-        ::-webkit-scrollbar-thumb { background:rgba(108,99,255,.4); border-radius:9999px; }
+        .btn-update:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(79, 124, 255, 0.35); }
     </style>
 
     @php
@@ -192,29 +148,29 @@
         </div>
         @endif
 
-        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
             {{-- ============================================================ --}}
             {{-- LEFT COLUMN (lg:3/5)                                          --}}
             {{-- ============================================================ --}}
-            <div class="lg:col-span-3 flex flex-col gap-5">
+            <div class="lg:col-span-3 flex flex-col gap-6">
 
                 {{-- ===== IDENTITY CARD ===== --}}
-                <div class="card p-6 fade-up delay-1">
-                    <div class="flex items-center gap-5 mb-5">
-                        <div class="avatar">{{ $initials }}</div>
+                <div class="profile-card p-6 md:p-8 animate-in delay-1">
+                    <div class="flex items-center gap-6 mb-6">
+                        <div class="avatar-circle">{{ $initials }}</div>
                         <div class="min-w-0">
-                            <h1 class="font-syne font-extrabold text-white text-xl leading-tight truncate">
+                            <h1 class="font-syne font-extrabold text-white text-2xl leading-tight truncate">
                                 {{ $user->name }}
                             </h1>
-                            <p class="text-sm truncate mt-0.5" style="color:var(--text-muted);">
+                            <p class="text-sm truncate mt-1" style="color:var(--text-muted);">
                                 {{ $user->email }}
                             </p>
-                            <div class="flex items-center gap-2 mt-2">
-                                <span class="badge" style="background:rgba(255,209,102,.1); color:var(--gold);">
+                            <div class="flex items-center gap-2 mt-3">
+                                <span class="badge-glass" style="color:var(--gold);">
                                     🏆 Level {{ $user->level }}
                                 </span>
-                                <span class="badge" style="background:rgba(108,99,255,.1); color:var(--purple);">
+                                <span class="badge-glass" style="color:var(--primary);">
                                     {{ $levelName }}
                                 </span>
                             </div>
@@ -223,66 +179,70 @@
 
                     {{-- XP bar --}}
                     <div>
-                        <div class="flex justify-between text-xs font-dm mb-1" style="color:var(--text-muted);">
-                            <span>XP ke level berikutnya</span>
-                            <span style="color:var(--purple);">{{ $xpPercent }}%</span>
+                        <div class="flex justify-between text-xs font-bold mb-2" style="color:var(--text-muted);">
+                            <span>Progress Level</span>
+                            <span style="color:var(--primary);">{{ $xpPercent }}%</span>
                         </div>
-                        <div class="rounded-full overflow-hidden" style="height:7px; background:rgba(108,99,255,.15);">
-                            <div class="xp-fill" style="width:{{ $xpPercent }}%;"></div>
+                        <div class="xp-bar-container">
+                            <div class="xp-bar-fill" style="width:{{ $xpPercent }}%;"></div>
                         </div>
-                        <p class="text-xs mt-1 font-dm" style="color:var(--text-muted);">
+                        <p class="text-[11px] mt-2 font-medium" style="color:var(--text-muted);">
                             {{ $xpForNext }} XP lagi untuk naik level
                         </p>
                     </div>
                 </div>
 
                 {{-- ===== STATS ===== --}}
-                <div class="fade-up delay-2 flex gap-3">
+                <div class="animate-in delay-2 flex gap-4">
                     <div class="stat-box">
-                        <div class="stat-value" style="color:var(--purple);">{{ number_format($user->xp) }}</div>
-                        <div class="stat-label">Total XP</div>
+                        <div class="text-2xl font-syne font-extrabold" style="color:var(--primary);">{{ number_format($user->xp) }}</div>
+                        <div class="text-[10px] uppercase tracking-widest font-bold mt-1" style="color:var(--text-muted);">Total XP</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-value" style="color:var(--green);">{{ $user->streak }}</div>
-                        <div class="stat-label">🔥 Streak</div>
+                        <div class="text-2xl font-syne font-extrabold" style="color:var(--green);">{{ $user->streak }}</div>
+                        <div class="text-[10px] uppercase tracking-widest font-bold mt-1" style="color:var(--text-muted);">🔥 Streak</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-value" style="color:var(--gold);">{{ $wordsLearned }}</div>
-                        <div class="stat-label">Kata Dipelajari</div>
+                        <div class="text-2xl font-syne font-extrabold" style="color:var(--gold);">{{ $wordsLearned }}</div>
+                        <div class="text-[10px] uppercase tracking-widest font-bold mt-1" style="color:var(--text-muted);">Kosakata</div>
                     </div>
                 </div>
 
                 {{-- ===== RECENT XP LOG ===== --}}
-                <div class="card p-6 fade-up delay-3">
-                    <h2 class="font-syne font-bold text-white text-base mb-4">Riwayat XP</h2>
+                <div class="profile-card p-6 md:p-8 animate-in delay-3">
+                    <h2 class="font-syne font-bold text-white text-lg mb-6 flex items-center gap-2">
+                        <span>Riwayat Aktivitas</span>
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-md bg-white/5 text-[var(--text-muted)]">Terbaru</span>
+                    </h2>
 
                     @if($xpLogs->isEmpty())
-                        <div class="text-center py-8">
-                            <p class="text-3xl mb-2">📭</p>
-                            <p class="font-syne font-semibold text-white text-sm">Belum ada aktivitas</p>
-                            <p class="text-xs mt-1" style="color:var(--text-muted);">
-                                Selesaikan lesson pertamamu untuk mendapat XP!
+                        <div class="text-center py-10">
+                            <p class="text-4xl mb-4">✨</p>
+                            <p class="font-syne font-bold text-white">Belum ada aktivitas</p>
+                            <p class="text-xs mt-2" style="color:var(--text-muted);">
+                                Mulailah belajar untuk mengumpulkan XP!
                             </p>
                         </div>
                     @else
-                        <div>
+                        <div class="space-y-3">
                             @foreach($xpLogs as $log)
-                            <div class="log-row">
-                                <div class="flex items-center gap-3 min-w-0">
-                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                                         style="background:rgba(108,99,255,.12); border:1px solid var(--border);">
+                            <div class="log-item">
+                                <div class="flex items-center gap-4 min-w-0">
+                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-white/5 border border-white/5 text-lg">
                                         ⚡
                                     </div>
-                                    <p class="font-dm text-sm text-white truncate">
-                                        {{ $log->activity ?? '—' }}
-                                    </p>
+                                    <div class="min-w-0">
+                                        <p class="font-bold text-sm text-white truncate">
+                                            {{ $log->activity ?? 'Aktivitas Belajar' }}
+                                        </p>
+                                        <p class="text-[11px] mt-0.5" style="color:var(--text-muted);">
+                                            {{ $log->created_at ? $log->created_at->diffForHumans() : 'Baru saja' }}
+                                        </p>
+                                    </div>
                                 </div>
                                 <div class="text-right flex-shrink-0">
-                                    <p class="font-syne font-bold text-sm" style="color:var(--gold);">
+                                    <p class="font-syne font-extrabold text-sm" style="color:var(--primary);">
                                         +{{ $log->xp_gained ?? 0 }} XP
-                                    </p>
-                                    <p class="text-xs mt-0.5" style="color:var(--text-muted);">
-                                        {{ $log->created_at ? $log->created_at->diffForHumans() : '—' }}
                                     </p>
                                 </div>
                             </div>
@@ -296,76 +256,89 @@
             {{-- ============================================================ --}}
             {{-- RIGHT COLUMN (lg:2/5) — EDIT FORM                            --}}
             {{-- ============================================================ --}}
-            <div class="lg:col-span-2 fade-up delay-4">
-                <div class="card p-6 sticky top-6">
-                    <h2 class="font-syne font-bold text-white text-base mb-5">Edit Profil</h2>
+            <div class="lg:col-span-2 animate-in delay-3">
+                <div class="profile-card p-6 md:p-8 sticky top-8">
+                    <h2 class="font-syne font-bold text-white text-lg mb-6">Edit Profil</h2>
 
                     <form action="{{ route('profile.update') }}" method="POST">
                         @csrf
                         @method('PUT')
 
                         {{-- Name --}}
-                        <div class="mb-4">
-                            <label for="name" class="form-label">Nama</label>
+                        <div class="mb-5">
+                            <label for="name" class="form-label-custom">Nama Lengkap</label>
                             <input type="text"
                                    id="name"
                                    name="name"
-                                   class="form-input {{ $errors->has('name') ? 'is-error' : '' }}"
+                                   class="form-input-custom {{ $errors->has('name') ? 'is-error' : '' }}"
                                    value="{{ old('name', $user->name) }}"
-                                   placeholder="Nama lengkap"
+                                   placeholder="Contoh: Budi Santoso"
                                    required>
                             @error('name')
-                                <p class="text-xs mt-1" style="color:#ff9999;">{{ $message }}</p>
+                                <p class="text-xs mt-1.5 ml-1" style="color:var(--red);">{{ $message }}</p>
                             @enderror
                         </div>
 
                         {{-- Email --}}
-                        <div class="mb-4">
-                            <label for="email" class="form-label">Email</label>
+                        <div class="mb-5">
+                            <label for="email" class="form-label-custom">Alamat Email</label>
                             <input type="email"
                                    id="email"
                                    name="email"
-                                   class="form-input {{ $errors->has('email') ? 'is-error' : '' }}"
+                                   class="form-input-custom {{ $errors->has('email') ? 'is-error' : '' }}"
                                    value="{{ old('email', $user->email) }}"
                                    placeholder="email@contoh.com"
                                    required>
                             @error('email')
-                                <p class="text-xs mt-1" style="color:#ff9999;">{{ $message }}</p>
+                                <p class="text-xs mt-1.5 ml-1" style="color:var(--red);">{{ $message }}</p>
                             @enderror
                         </div>
 
                         {{-- Divider --}}
-                        <div style="height:1px; background:var(--border); margin:1.25rem 0;"></div>
-                        <p class="font-dm text-xs mb-3" style="color:var(--text-muted);">
-                            Kosongkan jika tidak ingin mengubah password.
-                        </p>
+                        <div class="h-px w-full my-6" style="background:var(--border);"></div>
+                        
+                        {{-- Current Password --}}
+                        <div class="mb-5">
+                            <label for="current_password" class="form-label-custom">Password Saat Ini</label>
+                            <input type="password"
+                                   id="current_password"
+                                   name="current_password"
+                                   class="form-input-custom {{ $errors->has('current_password') ? 'is-error' : '' }}"
+                                   placeholder="••••••••">
+                            @error('current_password')
+                                <p class="text-xs mt-1.5 ml-1" style="color:var(--red);">{{ $message }}</p>
+                            @enderror
+                            <p class="text-[10px] mt-2 ml-1" style="color:var(--text-muted);">
+                                *Wajib diisi jika ingin mengubah nama, email, atau password.
+                            </p>
+                        </div>
 
                         {{-- New Password --}}
-                        <div class="mb-4">
-                            <label for="password" class="form-label">Password Baru</label>
+                        <div class="mb-5">
+                            <label for="password" class="form-label-custom">Password Baru (Opsional)</label>
                             <input type="password"
                                    id="password"
                                    name="password"
-                                   class="form-input {{ $errors->has('password') ? 'is-error' : '' }}"
-                                   placeholder="••••••••"
+                                   class="form-input-custom {{ $errors->has('password') ? 'is-error' : '' }}"
+                                   placeholder="Min. 8 karakter"
                                    autocomplete="new-password">
                             @error('password')
-                                <p class="text-xs mt-1" style="color:#ff9999;">{{ $message }}</p>
+                                <p class="text-xs mt-1.5 ml-1" style="color:var(--red);">{{ $message }}</p>
                             @enderror
                         </div>
 
                         {{-- Confirm Password --}}
-                        <div class="mb-6">
-                            <label for="password_confirmation" class="form-label">Konfirmasi Password</label>
+                        <div class="mb-8">
+                            <label for="password_confirmation" class="form-label-custom">Konfirmasi Password Baru</label>
                             <input type="password"
                                    id="password_confirmation"
                                    name="password_confirmation"
-                                   class="form-input"
-                                   placeholder="••••••••"
+                                   class="form-input-custom"
+                                   placeholder="Ulangi password baru"
                                    autocomplete="new-password">
                         </div>
 
-                        <button type="submit" class="btn-save">
+                        <button type="submit" class="btn-update">
                             Simpan Perubahan
                         </button>
                     </form>
