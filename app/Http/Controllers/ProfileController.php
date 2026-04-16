@@ -80,6 +80,10 @@ class ProfileController extends Controller
         $totalXpEarned  = $user->xpLogs()->sum('xp_gained');
         $totalAttempts  = $user->progress()->sum('attempts');
 
+        $wordsLearned = \App\Models\Vocabulary::whereHas('lesson.progress', function($q) use ($user) {
+            $q->where('user_id', $user->id)->where('is_completed', true);
+        })->count();
+
         // Hitung XP yang dibutuhkan untuk level berikutnya
         $xpPerLevel     = 100;
         $currentLevelXp = ($user->level - 1) * $xpPerLevel;
@@ -93,6 +97,7 @@ class ProfileController extends Controller
             'xp_progress'     => $xpProgress,
             'xp_to_next_level'=> $xpToNextLevel,
             'xp_percent'      => min(100, (int) round(($user->xp % $xpPerLevel) / $xpPerLevel * 100)),
+            'words_learned'   => $wordsLearned,
         ];
     }
 }

@@ -21,7 +21,7 @@ Route::middleware('guest')->group(function () {
 
     // Login
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login.post');
 
     // Register
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
@@ -50,7 +50,7 @@ Route::middleware('auth')->group(function () {
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
-    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

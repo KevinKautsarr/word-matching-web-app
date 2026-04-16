@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Lesson;
 use App\Models\UserProgress;
 use App\Models\UserXpLog;
+use App\Http\Requests\SubmitGameRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,16 +34,45 @@ class GameController extends Controller
 
         $vocabularies = $lesson->vocabularies->shuffle();
 
-        return view('game.play', compact('lesson', 'vocabularies', 'user'));
+        $expectedTotal = 30; // Game JS memiliki 3 stage, masing-masing selalu di-fill/dipaksa jadi 10 kartu
+
+        $attemptToken = \Illuminate\Support\Str::uuid()->toString();
+        session(['game_attempt_' . $lesson_id => [
+            'token'          => $attemptToken,
+            'vocab_count'    => $vocabularies->count(),
+            'expected_total' => $expectedTotal,
+            'started_at'     => now()->timestamp,
+        ]]);
+
+        return view('game.play', compact('lesson', 'vocabularies', 'user', 'attemptToken'));
     }
 
-    public function submit(Request $request, int $lessonId)
+    public function submit(SubmitGameRequest $request, int $lessonId)
     {
-        $request->validate([
-            'score'   => 'required|numeric',
-            'correct' => 'required|numeric',
-            'total'   => 'required|numeric',
-        ]);
+        $sessionKey = 'game_attempt_' . $lessonId;
+        $attemptData = session($sessionKey);
+
+        if (!$attemptData || $attemptData['token'] !== $request->attempt_token) {
+            return response()->json(['error' => 'Sesi game tidak valid atau sudah kadaluarsa. Mencegah duplikasi submit.'], 403);
+        }
+
+        if ((int)$request->correct > (int)$request->total) {
+            return response()->json(['error' => 'Data hasil tidak logis.'], 422);
+        }
+
+        // Anti-manipulation: Total mismatch vs DB knowledge
+        if ((int)$request->total !== $attemptData['expected_total']) {
+            return response()->json(['error' => 'Inkonsistensi total pertanyaan.'], 422);
+        }
+
+        // Anti-manipulation: Override score with server computation
+        $serverScore = (int)$request->correct * 10;
+        if ((int)$request->score !== $serverScore) {
+            return response()->json(['error' => 'Inkonsistensi skor mendasar.'], 422);
+        }
+
+        // Token One-time Use: Hapus dari session *setelah* validasi
+        session()->forget($sessionKey);
 
         $user = Auth::user();
         $lesson = Lesson::with('unit')->findOrFail($lessonId);
@@ -55,7 +85,7 @@ class GameController extends Controller
 
         $correct = (int) $request->correct;
         $total   = (int) $request->total;
-        $score   = (int) $request->score;
+        $score   = $serverScore; // Use server verified score
 
         $xpEarned = 0;
         if ($total > 0) {
@@ -63,11 +93,11 @@ class GameController extends Controller
         }
 
         $isCompleted = false;
-        if ($total > 0 && $correct >= ($total * 0.6)) {
+        if ($total > 0 && $correct >= ($total * 0.7)) {
             $isCompleted = true;
         }
 
-        DB::transaction(function () use ($user, $lesson, $correct, $total, $score, $isCompleted, &$xpEarned) {
+        DB::transaction(function () use ($user, $request, $lesson, $correct, $total, $score, $isCompleted, &$xpEarned) {
             $progress = UserProgress::firstOrNew([
                 'user_id'   => $user->id,
                 'lesson_id' => $lesson->id
@@ -78,7 +108,7 @@ class GameController extends Controller
             $progress->attempts = ($progress->attempts ?? 0) + 1;
             $progress->is_completed = $progress->is_completed || $isCompleted;
             $progress->score = max((int)$progress->score, $score);
-            $progress->time_spent = 60;
+            $progress->time_spent = (int) $request->input('time_spent', 60);
             $progress->save();
 
             // Streak & Daily Goal logic (Only if completed)
@@ -148,7 +178,7 @@ class GameController extends Controller
                 'score'         => $score,
                 'correct'       => $correct,
                 'total'         => $total,
-                'time_spent'    => 60,
+                'time_spent'    => (int) $request->input('time_spent', 60),
                 'xp_earned'     => $xpEarned,
                 'completed'     => $isCompleted,
                 'daily_current' => $user->daily_goal_progress,

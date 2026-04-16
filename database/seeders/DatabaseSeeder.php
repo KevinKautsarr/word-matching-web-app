@@ -16,15 +16,19 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        if (!app()->environment(['local', 'testing'])) {
+            $this->command->warn('Destructive seeding is only allowed in local or testing environments. Aborting.');
+            return;
+        }
         // ── 1. DISABLE FK & TRUNCATE ─────────────────────────────────────
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
         UserXpLog::truncate();
         UserProgress::truncate();
         Vocabulary::truncate();
         Lesson::truncate();
         Unit::truncate();
         User::truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
 
         // ── 2. USER DEMO ─────────────────────────────────────────────────
         $user = User::create([

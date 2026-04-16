@@ -154,10 +154,10 @@
 
     @php
         $initials      = collect(explode(' ', $user->name))->map(fn($w) => strtoupper($w[0] ?? ''))->take(2)->implode('');
-        $xpPercent     = $user->xp_progress_percent ?? 0;
-        $xpForNext     = $user->xp_for_next_level   ?? 100;
-        $levelName     = $user->level_name           ?? 'Pemula';
-        $wordsLearned  = method_exists($user, 'wordsLearned') ? $user->wordsLearned() : 0;
+        $xpPercent     = $stats['xp_percent'] ?? 0;
+        $xpForNext     = $stats['xp_to_next_level'] ?? 100;
+        $levelName     = 'Pemula';
+        $wordsLearned  = $stats['words_learned'] ?? 0;
     @endphp
 
     <div class="max-w-3xl mx-auto px-4 py-10">
@@ -256,7 +256,7 @@
                 <div class="card p-6 fade-up delay-3">
                     <h2 class="font-syne font-bold text-white text-base mb-4">Riwayat XP</h2>
 
-                    @if($recentLogs->isEmpty())
+                    @if($xpLogs->isEmpty())
                         <div class="text-center py-8">
                             <p class="text-3xl mb-2">📭</p>
                             <p class="font-syne font-semibold text-white text-sm">Belum ada aktivitas</p>
@@ -266,7 +266,7 @@
                         </div>
                     @else
                         <div>
-                            @foreach($recentLogs as $log)
+                            @foreach($xpLogs as $log)
                             <div class="log-row">
                                 <div class="flex items-center gap-3 min-w-0">
                                     <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"

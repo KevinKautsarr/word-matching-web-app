@@ -333,7 +333,8 @@
                 score: totalCorrectMatches * 10,
                 correct: totalCorrectMatches,
                 total: totalPairsToAttempt,
-                time_spent: timeSpent
+                time_spent: timeSpent,
+                attempt_token: config.attemptToken
             })
         })
         .then(res => res.json())

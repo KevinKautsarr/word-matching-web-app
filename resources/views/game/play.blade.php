@@ -13,6 +13,7 @@
     <script>
         window.GameConfig = {
             allVocab: @json($vocabularies->map(fn($v) => ['id'=>$v->id,'word'=>$v->word,'meaning'=>$v->meaning])),
+            attemptToken: '{{ $attemptToken }}',
             csrfToken: '{{ csrf_token() }}',
             submitUrl: '{{ route("game.submit", $lesson->id) }}',
             exitUrl: '{{ route("lessons.show", $lesson->id) }}'
